@@ -1,0 +1,13 @@
+{
+  "name": "cotiza-gz",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo \"Run backend and frontend separately (see DEPLOY.md)\"",
+    "vercel-build": "cd frontend && npm install && npm run build"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.47.0"
+  }
+}
