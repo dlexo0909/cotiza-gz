@@ -64,19 +64,39 @@ export default function CotizacionPdfPage() {
 
         {/* Header */}
         <div className="flex justify-between items-start mb-8 border-b-2 border-gray-800 pb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {config.empresa_nombre || 'Mi Empresa'}
-            </h1>
-            {config.empresa_rfc && <p className="text-gray-600">RFC: {config.empresa_rfc}</p>}
-            {config.empresa_direccion && <p className="text-gray-600">{config.empresa_direccion}</p>}
-            {config.empresa_telefono && <p className="text-gray-600">Tel: {config.empresa_telefono}</p>}
-            {config.empresa_email && <p className="text-gray-600">{config.empresa_email}</p>}
+          {/* Logo + datos empresa */}
+          <div className="flex items-center gap-4">
+            <img
+              src="/logo.png"
+              alt="Logo"
+              className="h-20 w-auto object-contain"
+              onError={e => { e.target.style.display = 'none' }}
+            />
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 leading-tight">
+                {config.empresa_nombre || 'Mi Empresa'}
+              </h1>
+              {config.empresa_representante && (
+                <p className="text-sm text-gray-600 mt-0.5">{config.empresa_representante}</p>
+              )}
+              {config.empresa_rfc && (
+                <p className="text-xs text-gray-500 mt-0.5">RFC: {config.empresa_rfc}</p>
+              )}
+              {config.empresa_direccion && (
+                <p className="text-xs text-gray-500">{config.empresa_direccion}</p>
+              )}
+              {(config.empresa_telefono || config.empresa_email) && (
+                <p className="text-xs text-gray-500">
+                  {config.empresa_telefono}{config.empresa_telefono && config.empresa_email ? ' · ' : ''}{config.empresa_email}
+                </p>
+              )}
+            </div>
           </div>
+          {/* Folio + estatus */}
           <div className="text-right">
             <div className="text-3xl font-bold text-blue-700">COTIZACIÓN</div>
             <div className="text-xl font-semibold text-gray-700 mt-1">{cot.folio}</div>
-            <div className="mt-2 text-xs text-gray-500">
+            <div className="mt-2">
               <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
                 cot.estatus === 'autorizada' ? 'bg-green-100 text-green-800' :
                 cot.estatus === 'enviada'    ? 'bg-blue-100 text-blue-800' :

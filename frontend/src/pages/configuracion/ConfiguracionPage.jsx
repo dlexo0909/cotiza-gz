@@ -35,7 +35,8 @@ export default function ConfiguracionPage() {
     {
       title: 'Empresa',
       fields: [
-        { key: 'empresa_nombre', label: 'Nombre', type: 'text' },
+        { key: 'empresa_nombre', label: 'Nombre / Marca (aparece grande en PDF)', type: 'text' },
+        { key: 'empresa_representante', label: 'Representante / Razón social', type: 'text' },
         { key: 'empresa_rfc', label: 'RFC', type: 'text' },
         { key: 'empresa_direccion', label: 'Dirección', type: 'text' },
         { key: 'empresa_telefono', label: 'Teléfono', type: 'text' },
