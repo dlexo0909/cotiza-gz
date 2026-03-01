@@ -1,7 +1,7 @@
 import { listClientes, getCliente, createCliente, updateCliente } from './handlers/clientes.js'
 import { listClientesFinales, getClienteFinal, createClienteFinal, updateClienteFinal } from './handlers/clientes-finales.js'
 import { listOrdenes, getOrden, createOrden, updateOrden, changeOrdenStatus, getOrdenHistorial } from './handlers/ordenes.js'
-import { listCotizaciones, getCotizacion, createCotizacion, updateCotizacion, changeCotizacionStatus, getAnalisisCostos, updateAnalisisCostos } from './handlers/cotizaciones.js'
+import { listCotizaciones, getCotizacion, createCotizacion, updateCotizacion, changeCotizacionStatus, getAnalisisCostos, updateAnalisisCostos, getOrdenCotizaciones } from './handlers/cotizaciones.js'
 import { reporteIngresos, reportePorCliente, reporteOrdenes, reportePorCobrar } from './handlers/reportes.js'
 import { listUsuarios, getUsuario, createUsuario, updateUsuario, toggleUsuario } from './handlers/usuarios.js'
 import { getConfiguracion, updateConfiguracion } from './handlers/configuracion.js'
@@ -51,6 +51,7 @@ export async function handler(event) {
     else if (cleanPath.match(/^\/ordenes\/\d+$/) && method === 'PUT') result = await updateOrden(event)
     else if (cleanPath.match(/^\/ordenes\/\d+\/estatus$/) && method === 'PATCH') result = await changeOrdenStatus(event)
     else if (cleanPath.match(/^\/ordenes\/\d+\/historial$/) && method === 'GET') result = await getOrdenHistorial(event)
+    else if (cleanPath.match(/^\/ordenes\/\d+\/cotizaciones$/) && method === 'GET') result = await getOrdenCotizaciones(event)
 
     // --- Cotizaciones ---
     else if (cleanPath === '/cotizaciones' && method === 'GET') result = await listCotizaciones(event)
@@ -58,8 +59,8 @@ export async function handler(event) {
     else if (cleanPath === '/cotizaciones' && method === 'POST') result = await createCotizacion(event)
     else if (cleanPath.match(/^\/cotizaciones\/\d+$/) && method === 'PUT') result = await updateCotizacion(event)
     else if (cleanPath.match(/^\/cotizaciones\/\d+\/estatus$/) && method === 'PATCH') result = await changeCotizacionStatus(event)
-    else if (cleanPath.match(/^\/cotizaciones\/\d+\/analisis$/) && method === 'GET') result = await getAnalisisCostos(event)
-    else if (cleanPath.match(/^\/cotizaciones\/\d+\/analisis$/) && method === 'PUT') result = await updateAnalisisCostos(event)
+    else if (cleanPath.match(/^\/cotizaciones\/\d+\/analisis-costos$/) && method === 'GET') result = await getAnalisisCostos(event)
+    else if (cleanPath.match(/^\/cotizaciones\/\d+\/analisis-costos$/) && method === 'PUT') result = await updateAnalisisCostos(event)
 
     // --- Dashboard ---
     else if (cleanPath === '/dashboard/stats' && method === 'GET') result = await getDashboardStats(event)

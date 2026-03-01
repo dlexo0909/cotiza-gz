@@ -238,6 +238,19 @@ export async function changeCotizacionStatus(event) {
   return ok({ message: 'Acción realizada' })
 }
 
+export async function getOrdenCotizaciones(event) {
+  await requireAuth(event)
+  const ordenId = parsePathParam(event, 'id')
+
+  const { data, error } = await supabase.from('v_cotizaciones_completas')
+    .select('*')
+    .eq('orden_id', ordenId)
+    .order('created_at', { ascending: false })
+
+  if (error) return serverError(error.message)
+  return ok(data || [])
+}
+
 export async function getAnalisisCostos(event) {
   await requireAuth(event)
   const id = parsePathParam(event, 'id')
