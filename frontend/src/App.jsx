@@ -17,6 +17,7 @@ import CotizacionesListPage from './pages/cotizaciones/CotizacionesListPage'
 import CotizacionFormPage from './pages/cotizaciones/CotizacionFormPage'
 import CotizacionDetailPage from './pages/cotizaciones/CotizacionDetailPage'
 import AnalisisCostosPage from './pages/cotizaciones/AnalisisCostosPage'
+import CotizacionPdfPage from './pages/cotizaciones/CotizacionPdfPage'
 import ReportesIndexPage from './pages/reportes/ReportesIndexPage'
 import ReporteIngresosPage from './pages/reportes/ReporteIngresosPage'
 import ReportePorClientePage from './pages/reportes/ReportePorClientePage'
@@ -94,6 +95,9 @@ export default function App() {
           <Route path="/usuarios/:id" element={<AdminRoute><UsuarioFormPage /></AdminRoute>} />
           <Route path="/configuracion" element={<AdminRoute><ConfiguracionPage /></AdminRoute>} />
         </Route>
+
+        {/* PDF — protected, no AppLayout */}
+        <Route path="/cotizaciones/:id/pdf" element={<ProtectedRoute><CotizacionPdfPage /></ProtectedRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
