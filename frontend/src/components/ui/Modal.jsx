@@ -1,12 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { X } from 'lucide-react'
 
 export default function Modal({ isOpen, onClose, title, children, size = 'md' }) {
-  const [visible, setVisible] = useState(false)
-
   useEffect(() => {
     if (isOpen) {
-      setVisible(true)
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = ''
@@ -14,7 +11,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' })
     return () => { document.body.style.overflow = '' }
   }, [isOpen])
 
-  if (!isOpen && !visible) return null
+  if (!isOpen) return null
 
   const sizes = {
     sm: 'max-w-md',
