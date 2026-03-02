@@ -19,19 +19,21 @@ export async function reporteIngresos(event) {
     fechaHasta = `${year}-12-31`
   }
 
-  let query = supabase.from('v_cotizaciones_completas')
+  const { data, error } = await supabase.from('v_cotizaciones_completas')
     .select('*')
     .not('fecha_cobro', 'is', null)
     .gte('fecha_cobro', fechaDesde)
     .lte('fecha_cobro', fechaHasta)
     .order('fecha_cobro', { ascending: false })
 
-  if (cliente_id) query = query.eq('cliente_id', cliente_id)
-
-  const { data, error } = await query
   if (error) return serverError(error.message)
 
-  const rows = data || []
+  // Filter by cliente_id in JS (view may not expose cliente_id yet)
+  let rows = data || []
+  if (cliente_id) {
+    const cid = parseInt(cliente_id)
+    rows = rows.filter(r => r.cliente_id === cid || String(r.cliente_id) === String(cid))
+  }
 
   // Summary
   const resumen = {

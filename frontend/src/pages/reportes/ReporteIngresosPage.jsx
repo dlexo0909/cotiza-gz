@@ -1,9 +1,33 @@
 import { useState, useEffect } from 'react'
 import { api } from '../../services/api'
-import { formatMoney } from '../../utils/helpers'
+import { formatMoney, formatDate } from '../../utils/helpers'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
-import { DollarSign, TrendingUp, FileText, CreditCard } from 'lucide-react'
+import { DollarSign, TrendingUp, FileText, CreditCard, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
+
+function exportCSV(rows, filename) {
+  const headers = ['Folio', 'Cliente', 'Sucursal', 'Fecha Cobro', 'N° Factura', 'Total Cotización', 'Comisión', 'Ingreso Real', 'Monto Facturado', 'Monto Cobrado']
+  const escape = v => `"${String(v ?? '').replace(/"/g, '""')}"`
+  const lines = [
+    headers.join(','),
+    ...rows.map(r => [
+      escape(r.folio),
+      escape(r.cliente_nombre),
+      escape(r.cliente_final_nombre || ''),
+      escape(r.fecha_cobro ? new Date(r.fecha_cobro).toLocaleDateString('es-MX') : ''),
+      escape(r.numero_factura || ''),
+      r.total ?? 0,
+      r.comision ?? 0,
+      r.ingreso_real ?? 0,
+      r.monto_factura ?? '',
+      r.monto_cobrado ?? '',
+    ].join(','))
+  ]
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click()
+  URL.revokeObjectURL(url)
+}
 
 export default function ReporteIngresosPage() {
   const currentYear = new Date().getFullYear()
@@ -104,16 +128,27 @@ export default function ReporteIngresosPage() {
 
           {data.detalle?.length > 0 && (
             <div className="card">
-              <h2 className="text-lg font-semibold mb-4">Detalle de cobros</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Detalle de cobros</h2>
+                <button
+                  onClick={() => exportCSV(data.detalle, `cobros-${year}${month ? '-'+month : ''}.csv`)}
+                  className="btn-secondary flex items-center gap-1 text-sm"
+                >
+                  <Download className="w-4 h-4" /> Exportar Excel
+                </button>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr>
                       <th className="table-header">Folio</th>
                       <th className="table-header">Cliente</th>
+                      <th className="table-header">Sucursal</th>
+                      <th className="table-header">Fecha Cobro</th>
                       <th className="table-header">Factura</th>
                       <th className="table-header text-right">Total</th>
-                      <th className="table-header text-right">Ingreso</th>
+                      <th className="table-header text-right">Ingreso Real</th>
+                      <th className="table-header text-right">Monto Cobrado</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -121,9 +156,12 @@ export default function ReporteIngresosPage() {
                       <tr key={d.id} className="hover:bg-gray-50">
                         <td className="table-cell font-medium">{d.folio}</td>
                         <td className="table-cell">{d.cliente_nombre}</td>
+                        <td className="table-cell text-gray-500">{d.cliente_final_nombre || '—'}</td>
+                        <td className="table-cell">{formatDate(d.fecha_cobro)}</td>
                         <td className="table-cell">{d.numero_factura || '—'}</td>
                         <td className="table-cell text-right">{formatMoney(d.total)}</td>
                         <td className="table-cell text-right text-green-600">{formatMoney(d.ingreso_real)}</td>
+                        <td className="table-cell text-right text-blue-600 font-medium">{d.monto_cobrado != null ? formatMoney(d.monto_cobrado) : '—'}</td>
                       </tr>
                     ))}
                   </tbody>

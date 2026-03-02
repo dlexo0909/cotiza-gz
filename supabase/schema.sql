@@ -179,7 +179,8 @@ LEFT JOIN public.clientes_finales cf ON o.cliente_final_id = cf.id
 LEFT JOIN public.usuarios u ON o.created_by = u.id;
 
 -- Vista de cotizaciones completas
-CREATE OR REPLACE VIEW public.v_cotizaciones_completas AS
+DROP VIEW IF EXISTS public.v_cotizaciones_completas;
+CREATE VIEW public.v_cotizaciones_completas AS
 SELECT
   cot.*,
   o.folio AS orden_folio,
@@ -187,6 +188,7 @@ SELECT
   o.descripcion AS orden_descripcion,
   o.ot_cliente AS orden_ot_cliente,
   o.direccion_obra AS orden_direccion_obra,
+  o.cliente_id AS cliente_id,
   c.nombre AS cliente_nombre,
   c.comision_pct AS cliente_comision_pct,
   cf.nombre AS cliente_final_nombre,
