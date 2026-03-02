@@ -34,7 +34,16 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-900 px-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
-          <div className="bg-primary-100 p-3 rounded-xl mb-4">
+          <img
+            src="/logo.png"
+            alt="Mantenimientos González"
+            className="h-24 w-auto object-contain mb-3"
+            onError={e => {
+              e.target.style.display = 'none'
+              e.target.nextSibling.style.display = 'flex'
+            }}
+          />
+          <div className="bg-primary-100 p-3 rounded-xl mb-4" style={{display:'none'}}>
             <ClipboardList className="w-8 h-8 text-primary-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Cotiza GZ</h1>
