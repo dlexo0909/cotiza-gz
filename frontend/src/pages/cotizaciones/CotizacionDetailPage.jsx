@@ -204,6 +204,8 @@ export default function CotizacionDetailPage() {
                   <Receipt className="w-4 h-4" /> Editar montos / factura
                 </button>
               )}
+
+              <Link to={`/cotizaciones/${id}/pdf`} target="_blank" className="btn-secondary w-full flex items-center justify-center gap-2 text-sm">
                 <FileDown className="w-4 h-4" /> Ver PDF
               </Link>
 
