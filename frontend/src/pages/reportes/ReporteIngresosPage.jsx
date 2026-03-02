@@ -146,8 +146,9 @@ export default function ReporteIngresosPage() {
                       <th className="table-header">Sucursal</th>
                       <th className="table-header">Fecha Cobro</th>
                       <th className="table-header">Factura</th>
-                      <th className="table-header text-right">Total</th>
+                      <th className="table-header text-right">Total Cliente</th>
                       <th className="table-header text-right">Ingreso Real</th>
+                      <th className="table-header text-right">Monto Facturado</th>
                       <th className="table-header text-right">Monto Cobrado</th>
                     </tr>
                   </thead>
@@ -160,7 +161,8 @@ export default function ReporteIngresosPage() {
                         <td className="table-cell">{formatDate(d.fecha_cobro)}</td>
                         <td className="table-cell">{d.numero_factura || '—'}</td>
                         <td className="table-cell text-right">{formatMoney(d.total)}</td>
-                        <td className="table-cell text-right text-green-600">{formatMoney(d.ingreso_real)}</td>
+                        <td className="table-cell text-right text-gray-500">{formatMoney(d.ingreso_real)}</td>
+                        <td className="table-cell text-right text-green-600 font-semibold">{d.monto_factura != null ? formatMoney(d.monto_factura) : '—'}</td>
                         <td className="table-cell text-right text-blue-600 font-medium">{d.monto_cobrado != null ? formatMoney(d.monto_cobrado) : '—'}</td>
                       </tr>
                     ))}
