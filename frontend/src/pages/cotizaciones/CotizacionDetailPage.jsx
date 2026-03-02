@@ -13,10 +13,11 @@ export default function CotizacionDetailPage() {
   const navigate = useNavigate()
   const [cot, setCot] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [actionModal, setActionModal] = useState(null) // 'enviar'|'autorizar'|'rechazar'|'revertir'|'factura'|'cobro'
+  const [actionModal, setActionModal] = useState(null) // 'enviar'|'autorizar'|'rechazar'|'revertir'|'factura'|'cobro'|'editar_montos'
   const [actionLoading, setActionLoading] = useState(false)
   const [facturaForm, setFacturaForm] = useState({ numero_factura: '', fecha_facturacion: '', monto_factura: '' })
   const [cobroForm, setCobroForm] = useState({ fecha_cobro: '', monto_cobrado: '' })
+  const [editMontosForm, setEditMontosForm] = useState({ numero_factura: '', fecha_facturacion: '', monto_factura: '', fecha_cobro: '', monto_cobrado: '' })
   useEffect(() => { loadData() }, [id])
 
   async function loadData() {
@@ -189,7 +190,20 @@ export default function CotizacionDetailPage() {
                 </button>
               )}
 
-              <Link to={`/cotizaciones/${id}/pdf`} target="_blank" className="btn-secondary w-full flex items-center justify-center gap-2 text-sm">
+              {cot.numero_factura && (
+                <button onClick={() => {
+                  setEditMontosForm({
+                    numero_factura: cot.numero_factura || '',
+                    fecha_facturacion: cot.fecha_facturacion || '',
+                    monto_factura: cot.monto_factura != null ? String(cot.monto_factura) : '',
+                    fecha_cobro: cot.fecha_cobro || '',
+                    monto_cobrado: cot.monto_cobrado != null ? String(cot.monto_cobrado) : '',
+                  })
+                  setActionModal('editar_montos')
+                }} className="btn-secondary w-full flex items-center justify-center gap-2 text-sm">
+                  <Receipt className="w-4 h-4" /> Editar montos / factura
+                </button>
+              )}
                 <FileDown className="w-4 h-4" /> Ver PDF
               </Link>
 
@@ -225,6 +239,44 @@ export default function CotizacionDetailPage() {
             <button onClick={() => setActionModal(null)} className="btn-secondary">Cancelar</button>
             <button onClick={() => handleAction('facturar', facturaForm)} disabled={actionLoading} className="btn-primary">
               {actionLoading ? 'Guardando...' : 'Registrar'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Editar Montos Modal */}
+      <Modal isOpen={actionModal === 'editar_montos'} onClose={() => setActionModal(null)} title="Editar factura y montos">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label-field">Número de factura</label>
+              <input value={editMontosForm.numero_factura} onChange={e => setEditMontosForm(p => ({ ...p, numero_factura: e.target.value }))} className="input-field" />
+            </div>
+            <div>
+              <label className="label-field">Fecha facturación</label>
+              <input type="date" value={editMontosForm.fecha_facturacion} onChange={e => setEditMontosForm(p => ({ ...p, fecha_facturacion: e.target.value }))} className="input-field" />
+            </div>
+          </div>
+          <div>
+            <label className="label-field">Monto facturado (lo que tú facturaste)</label>
+            <input type="number" step="0.01" min="0" value={editMontosForm.monto_factura} onChange={e => setEditMontosForm(p => ({ ...p, monto_factura: e.target.value }))} className="input-field" />
+          </div>
+          <div className="border-t pt-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="label-field">Fecha de cobro</label>
+                <input type="date" value={editMontosForm.fecha_cobro} onChange={e => setEditMontosForm(p => ({ ...p, fecha_cobro: e.target.value }))} className="input-field" />
+              </div>
+              <div>
+                <label className="label-field">Monto cobrado</label>
+                <input type="number" step="0.01" min="0" value={editMontosForm.monto_cobrado} onChange={e => setEditMontosForm(p => ({ ...p, monto_cobrado: e.target.value }))} className="input-field" />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setActionModal(null)} className="btn-secondary">Cancelar</button>
+            <button onClick={() => handleAction('editar_montos', editMontosForm)} disabled={actionLoading} className="btn-primary">
+              {actionLoading ? 'Guardando...' : 'Guardar cambios'}
             </button>
           </div>
         </div>

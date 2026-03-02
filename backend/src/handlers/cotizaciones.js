@@ -194,6 +194,15 @@ export async function changeCotizacionStatus(event) {
       }
       break
 
+    case 'editar_montos':
+      if (!cot.numero_factura) return badRequest('La cotización no tiene factura registrada')
+      if (body.monto_factura !== undefined) updateData.monto_factura = body.monto_factura ? parseFloat(body.monto_factura) : null
+      if (body.monto_cobrado !== undefined) updateData.monto_cobrado = body.monto_cobrado ? parseFloat(body.monto_cobrado) : null
+      if (body.numero_factura) updateData.numero_factura = body.numero_factura
+      if (body.fecha_facturacion) updateData.fecha_facturacion = body.fecha_facturacion
+      if (body.fecha_cobro !== undefined) updateData.fecha_cobro = body.fecha_cobro || null
+      break
+
     case 'revertir':
       newStatus = 'borrador'
       updateData.fecha_autorizacion = null
