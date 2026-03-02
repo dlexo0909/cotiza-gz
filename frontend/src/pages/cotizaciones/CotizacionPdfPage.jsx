@@ -16,7 +16,7 @@ export default function CotizacionPdfPage() {
       api.get('/configuracion'),
     ])
       .then(([cotData, configData]) => {
-        console.log('🧾 COT DATA:', cotData)
+        console.log('🧾 COT DATA COMPLETA:', JSON.stringify(cotData, null, 2))
         console.log('🔑 CAMPOS:', Object.keys(cotData))
         console.log('👤 cliente_nombre:', cotData.cliente_nombre)
         console.log('🏢 cliente_final_nombre:', cotData.cliente_final_nombre)
@@ -63,6 +63,20 @@ export default function CotizacionPdfPage() {
         >
           Cerrar
         </button>
+      </div>
+
+      {/* DEBUG PANEL — solo visible en pantalla */}
+      <div className="no-print bg-yellow-50 border border-yellow-400 rounded p-4 m-4 text-xs font-mono overflow-auto max-h-64">
+        <p className="font-bold text-yellow-800 mb-2">🔍 DEBUG — datos recibidos de la API:</p>
+        <p>cliente_nombre: <strong>{String(cot.cliente_nombre ?? 'null')}</strong></p>
+        <p>cliente_final_nombre: <strong>{String(cot.cliente_final_nombre ?? 'null')}</strong></p>
+        <p>orden_ot_cliente: <strong>{String(cot.orden_ot_cliente ?? 'null')}</strong></p>
+        <p>orden_descripcion: <strong>{String(cot.orden_descripcion ?? 'null')}</strong></p>
+        <p>orden_folio: <strong>{String(cot.orden_folio ?? 'null')}</strong></p>
+        <details className="mt-2">
+          <summary className="cursor-pointer text-yellow-700">Ver todos los campos</summary>
+          <pre className="mt-1 text-xs">{JSON.stringify(cot, null, 2)}</pre>
+        </details>
       </div>
 
       {/* Print area */}
