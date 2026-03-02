@@ -16,6 +16,12 @@ export default function CotizacionPdfPage() {
       api.get('/configuracion'),
     ])
       .then(([cotData, configData]) => {
+        console.log('🧾 COT DATA:', cotData)
+        console.log('🔑 CAMPOS:', Object.keys(cotData))
+        console.log('👤 cliente_nombre:', cotData.cliente_nombre)
+        console.log('🏢 cliente_final_nombre:', cotData.cliente_final_nombre)
+        console.log('📋 orden_ot_cliente:', cotData.orden_ot_cliente)
+        console.log('📝 orden_descripcion:', cotData.orden_descripcion)
         setCot(cotData)
         setConfig(configData)
       })
