@@ -272,7 +272,7 @@ BEGIN
   anio := EXTRACT(YEAR FROM now())::text;
 
   SELECT COALESCE(MAX(
-    CAST(SUBSTRING(folio FROM LENGTH(prefijo) + 6) AS integer)
+    CAST(SUBSTRING(folio FROM LENGTH(prefijo) + 7) AS integer)
   ), 0) + 1
   INTO siguiente
   FROM public.ordenes_trabajo
@@ -295,7 +295,7 @@ BEGIN
   anio := EXTRACT(YEAR FROM now())::text;
 
   SELECT COALESCE(MAX(
-    CAST(SUBSTRING(folio FROM LENGTH(prefijo) + 6) AS integer)
+    CAST(SUBSTRING(folio FROM LENGTH(prefijo) + 7) AS integer)
   ), 0) + 1
   INTO siguiente
   FROM public.cotizaciones
