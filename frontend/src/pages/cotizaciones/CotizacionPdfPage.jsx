@@ -16,12 +16,6 @@ export default function CotizacionPdfPage() {
       api.get('/configuracion'),
     ])
       .then(([cotData, configData]) => {
-        console.log('🧾 COT DATA COMPLETA:', JSON.stringify(cotData, null, 2))
-        console.log('🔑 CAMPOS:', Object.keys(cotData))
-        console.log('👤 cliente_nombre:', cotData.cliente_nombre)
-        console.log('🏢 cliente_final_nombre:', cotData.cliente_final_nombre)
-        console.log('📋 orden_ot_cliente:', cotData.orden_ot_cliente)
-        console.log('📝 orden_descripcion:', cotData.orden_descripcion)
         setCot(cotData)
         setConfig(configData)
       })
@@ -63,20 +57,6 @@ export default function CotizacionPdfPage() {
         >
           Cerrar
         </button>
-      </div>
-
-      {/* DEBUG PANEL — solo visible en pantalla */}
-      <div className="no-print bg-yellow-50 border border-yellow-400 rounded p-4 m-4 text-xs font-mono overflow-auto max-h-64">
-        <p className="font-bold text-yellow-800 mb-2">🔍 DEBUG — datos recibidos de la API:</p>
-        <p>cliente_nombre: <strong>{String(cot.cliente_nombre ?? 'null')}</strong></p>
-        <p>cliente_final_nombre: <strong>{String(cot.cliente_final_nombre ?? 'null')}</strong></p>
-        <p>orden_ot_cliente: <strong>{String(cot.orden_ot_cliente ?? 'null')}</strong></p>
-        <p>orden_descripcion: <strong>{String(cot.orden_descripcion ?? 'null')}</strong></p>
-        <p>orden_folio: <strong>{String(cot.orden_folio ?? 'null')}</strong></p>
-        <details className="mt-2">
-          <summary className="cursor-pointer text-yellow-700">Ver todos los campos</summary>
-          <pre className="mt-1 text-xs">{JSON.stringify(cot, null, 2)}</pre>
-        </details>
       </div>
 
       {/* Print area */}
@@ -127,19 +107,6 @@ export default function CotizacionPdfPage() {
               </span>
             </div>
           </div>
-        </div>
-
-        {/* Subtítulo: cliente → sucursal */}
-        <div className="mb-6 pb-3 border-b border-gray-200">
-          <p className="text-base font-semibold text-gray-700">
-            {cot.cliente_nombre || '—'}
-            {cot.cliente_final_nombre && (
-              <span className="text-gray-400"> → <span className="text-gray-700">{cot.cliente_final_nombre}</span></span>
-            )}
-          </p>
-          {cot.orden_descripcion && (
-            <p className="text-sm text-gray-500 mt-0.5">{cot.orden_descripcion}</p>
-          )}
         </div>
 
         {/* Client & Order info */}
