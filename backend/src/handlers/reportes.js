@@ -4,47 +4,69 @@ import { ok, serverError, parseQuery } from '../utils/response.js'
 // Reporte de ingresos por período
 export async function reporteIngresos(event) {
   await requireAuth(event)
-  const { desde, hasta, cliente_id } = parseQuery(event)
+  const { year: yearParam, month: monthParam, cliente_id } = parseQuery(event)
 
-  const year = new Date().getFullYear()
-  const fechaDesde = desde || `${year}-01-01`
-  const fechaHasta = hasta || `${year}-12-31`
+  const year = parseInt(yearParam) || new Date().getFullYear()
+  const month = monthParam ? parseInt(monthParam) : null
 
-  let query = supabase.from('v_reporte_ingresos')
+  let fechaDesde, fechaHasta
+  if (month) {
+    const lastDay = new Date(year, month, 0).getDate()
+    fechaDesde = `${year}-${String(month).padStart(2, '0')}-01`
+    fechaHasta = `${year}-${String(month).padStart(2, '0')}-${lastDay}`
+  } else {
+    fechaDesde = `${year}-01-01`
+    fechaHasta = `${year}-12-31`
+  }
+
+  let query = supabase.from('v_cotizaciones_completas')
     .select('*')
-    .gte('fecha_autorizacion', fechaDesde)
-    .lte('fecha_autorizacion', fechaHasta)
-    .order('fecha_autorizacion', { ascending: false })
+    .not('fecha_cobro', 'is', null)
+    .gte('fecha_cobro', fechaDesde)
+    .lte('fecha_cobro', fechaHasta)
+    .order('fecha_cobro', { ascending: false })
 
   if (cliente_id) query = query.eq('cliente_id', cliente_id)
 
   const { data, error } = await query
   if (error) return serverError(error.message)
 
-  const summary = {
-    total_cotizado: data.reduce((s, r) => s + parseFloat(r.total || 0), 0),
-    total_comision: data.reduce((s, r) => s + parseFloat(r.comision || 0), 0),
-    total_ingreso_real: data.reduce((s, r) => s + parseFloat(r.ingreso_real || 0), 0),
-    total_cobrado: data.filter(r => r.fecha_cobro).reduce((s, r) => s + parseFloat(r.total || 0), 0),
-    cantidad: data.length,
+  const rows = data || []
+
+  // Summary
+  const resumen = {
+    cobradas: rows.length,
+    ingreso_real: rows.reduce((s, r) => s + parseFloat(r.ingreso_real || 0), 0),
+    comision: rows.reduce((s, r) => s + parseFloat(r.comision || 0), 0),
+    total_facturado: rows.reduce((s, r) => s + parseFloat(r.monto_factura || r.ingreso_real || 0), 0),
   }
 
-  return ok({ items: data, summary })
+  // Monthly breakdown
+  const byMonth = {}
+  for (const r of rows) {
+    const m = new Date(r.fecha_cobro).getMonth() + 1
+    if (!byMonth[m]) byMonth[m] = { mes: m, cobradas: 0, ingreso_real: 0, comision: 0, total: 0 }
+    byMonth[m].cobradas++
+    byMonth[m].ingreso_real += parseFloat(r.ingreso_real || 0)
+    byMonth[m].comision += parseFloat(r.comision || 0)
+    byMonth[m].total += parseFloat(r.total || 0)
+  }
+  const mensual = Object.values(byMonth).sort((a, b) => a.mes - b.mes)
+
+  return ok({ resumen, mensual, detalle: rows })
 }
 
 // Reporte por cliente
 export async function reportePorCliente(event) {
   await requireAuth(event)
-  const { desde, hasta } = parseQuery(event)
+  const { year: yearParam } = parseQuery(event)
+  const year = parseInt(yearParam) || new Date().getFullYear()
 
-  const year = new Date().getFullYear()
-  const fechaDesde = desde || `${year}-01-01`
-  const fechaHasta = hasta || `${year}-12-31`
-
-  const { data, error } = await supabase.from('v_reporte_ingresos')
+  const { data, error } = await supabase.from('v_cotizaciones_completas')
     .select('*')
-    .gte('fecha_autorizacion', fechaDesde)
-    .lte('fecha_autorizacion', fechaHasta)
+    .in('estatus', ['autorizada'])
+    .gte('fecha_autorizacion', `${year}-01-01`)
+    .lte('fecha_autorizacion', `${year}-12-31`)
 
   if (error) return serverError(error.message)
 
@@ -61,13 +83,11 @@ export async function reportePorCliente(event) {
     byClient[cid].total += parseFloat(row.total || 0)
     byClient[cid].comision += parseFloat(row.comision || 0)
     byClient[cid].ingreso_real += parseFloat(row.ingreso_real || 0)
-    if (row.fecha_cobro) byClient[cid].cobrado += parseFloat(row.total || 0)
+    if (row.fecha_cobro) byClient[cid].cobrado += parseFloat(row.monto_cobrado || row.ingreso_real || 0)
     byClient[cid].cantidad++
   }
 
-  const clientes = Object.values(byClient).sort((a, b) => b.total - a.total)
-
-  return ok({ clientes })
+  return ok(Object.values(byClient).sort((a, b) => b.total - a.total))
 }
 
 // Reporte de estado de órdenes (pipeline)
@@ -83,19 +103,20 @@ export async function reporteOrdenes(event) {
   const { data, error } = await query.order('fecha_creacion', { ascending: false })
   if (error) return serverError(error.message)
 
-  // Group by status
   const statuses = ['levantamiento', 'cotizado', 'autorizado', 'en_proceso', 'terminado', 'facturado', 'cobrado', 'cancelado']
+  // pipeline: { status: count }  &  detalle: { status: [items] }
   const pipeline = {}
-  for (const s of statuses) pipeline[s] = { count: 0, total: 0 }
+  const detalle = {}
+  for (const s of statuses) { pipeline[s] = 0; detalle[s] = [] }
 
   for (const ord of (data || [])) {
-    if (pipeline[ord.estatus]) {
-      pipeline[ord.estatus].count++
-      pipeline[ord.estatus].total += parseFloat(ord.monto_autorizado || 0)
+    if (pipeline[ord.estatus] !== undefined) {
+      pipeline[ord.estatus]++
+      detalle[ord.estatus].push(ord)
     }
   }
 
-  return ok({ pipeline, items: data })
+  return ok({ pipeline, detalle })
 }
 
 // Cuentas por cobrar
