@@ -114,10 +114,22 @@ export default function CotizacionPdfPage() {
           <div className="bg-gray-50 rounded p-4">
             <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Cliente</p>
             <p className="font-semibold text-gray-800">{cot.cliente_nombre || '—'}</p>
+            {cot.cliente_final_nombre && (
+              <p className="text-xs text-gray-600 mt-1">Sucursal: <strong>{cot.cliente_final_nombre}</strong></p>
+            )}
           </div>
           <div className="bg-gray-50 rounded p-4">
             <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Orden de trabajo</p>
             <p className="font-semibold text-gray-800">{cot.orden_folio || '—'}</p>
+            {cot.orden_ot_cliente && (
+              <p className="text-xs text-gray-600 mt-1">OT cliente: <strong>{cot.orden_ot_cliente}</strong></p>
+            )}
+            {cot.orden_descripcion && (
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">{cot.orden_descripcion}</p>
+            )}
+            {cot.orden_direccion_obra && (
+              <p className="text-xs text-gray-500 mt-1">📍 {cot.orden_direccion_obra}</p>
+            )}
           </div>
         </div>
 

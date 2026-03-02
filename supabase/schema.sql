@@ -182,12 +182,17 @@ SELECT
   cot.*,
   o.folio AS orden_folio,
   o.estatus AS orden_estatus,
+  o.descripcion AS orden_descripcion,
+  o.ot_cliente AS orden_ot_cliente,
+  o.direccion_obra AS orden_direccion_obra,
   c.nombre AS cliente_nombre,
   c.comision_pct AS cliente_comision_pct,
+  cf.nombre AS cliente_final_nombre,
   u.nombre AS creado_por_nombre
 FROM public.cotizaciones cot
 LEFT JOIN public.ordenes_trabajo o ON cot.orden_id = o.id
 LEFT JOIN public.clientes c ON o.cliente_id = c.id
+LEFT JOIN public.clientes_finales cf ON o.cliente_final_id = cf.id
 LEFT JOIN public.usuarios u ON cot.created_by = u.id;
 
 -- ============================================================
