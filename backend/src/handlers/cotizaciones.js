@@ -177,6 +177,7 @@ export async function changeCotizacionStatus(event) {
       if (!body.numero_factura) return badRequest('Número de factura requerido')
       updateData.numero_factura = body.numero_factura
       updateData.fecha_facturacion = body.fecha_facturacion || new Date().toISOString().split('T')[0]
+      if (body.monto_factura) updateData.monto_factura = parseFloat(body.monto_factura)
       // Move order to facturado
       if (['autorizado', 'en_proceso', 'terminado'].includes(cot.ordenes_trabajo?.estatus)) {
         ordenUpdate = { estatus: 'facturado' }
@@ -186,6 +187,7 @@ export async function changeCotizacionStatus(event) {
     case 'cobrar':
       if (!cot.numero_factura) return badRequest('La cotización debe estar facturada primero')
       updateData.fecha_cobro = body.fecha_cobro || new Date().toISOString().split('T')[0]
+      if (body.monto_cobrado) updateData.monto_cobrado = parseFloat(body.monto_cobrado)
       // Move order to cobrado
       if (cot.ordenes_trabajo?.estatus === 'facturado') {
         ordenUpdate = { estatus: 'cobrado' }
@@ -197,7 +199,9 @@ export async function changeCotizacionStatus(event) {
       updateData.fecha_autorizacion = null
       updateData.numero_factura = null
       updateData.fecha_facturacion = null
+      updateData.monto_factura = null
       updateData.fecha_cobro = null
+      updateData.monto_cobrado = null
       // Revert order if needed
       if (cot.ordenes_trabajo?.estatus === 'autorizado') {
         ordenUpdate = { estatus: 'cotizado' }

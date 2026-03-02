@@ -15,8 +15,8 @@ export default function CotizacionDetailPage() {
   const [loading, setLoading] = useState(true)
   const [actionModal, setActionModal] = useState(null) // 'enviar'|'autorizar'|'rechazar'|'revertir'|'factura'|'cobro'
   const [actionLoading, setActionLoading] = useState(false)
-  const [facturaForm, setFacturaForm] = useState({ numero_factura: '', fecha_facturacion: '' })
-  const [cobroForm, setCobroForm] = useState({ fecha_cobro: '' })
+  const [facturaForm, setFacturaForm] = useState({ numero_factura: '', fecha_facturacion: '', monto_factura: '' })
+  const [cobroForm, setCobroForm] = useState({ fecha_cobro: '', monto_cobrado: '' })
   useEffect(() => { loadData() }, [id])
 
   async function loadData() {
@@ -103,8 +103,16 @@ export default function CotizacionDetailPage() {
             <h2 className="text-lg font-semibold mb-4">Información</h2>
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div><dt className="text-gray-500">Vigencia</dt><dd>{cot.vigencia_dias} días — {formatDate(cot.fecha_vigencia)}</dd></div>
-              <div><dt className="text-gray-500">Factura</dt><dd>{cot.numero_factura || '—'} {cot.fecha_facturacion ? `(${formatDate(cot.fecha_facturacion)})` : ''}</dd></div>
-              <div><dt className="text-gray-500">Fecha cobro</dt><dd>{formatDate(cot.fecha_cobro)}</dd></div>
+              <div>
+                <dt className="text-gray-500">Factura</dt>
+                <dd>{cot.numero_factura || '—'} {cot.fecha_facturacion ? `(${formatDate(cot.fecha_facturacion)})` : ''}</dd>
+                {cot.monto_factura != null && <dd className="text-green-700 font-semibold">{formatMoney(cot.monto_factura)}</dd>}
+              </div>
+              <div>
+                <dt className="text-gray-500">Cobro</dt>
+                <dd>{formatDate(cot.fecha_cobro) || '—'}</dd>
+                {cot.monto_cobrado != null && <dd className="text-green-700 font-semibold">{formatMoney(cot.monto_cobrado)}</dd>}
+              </div>
               <div><dt className="text-gray-500">Fecha autorización</dt><dd>{formatDate(cot.fecha_autorizacion)}</dd></div>
               {cot.condiciones && <div className="sm:col-span-2"><dt className="text-gray-500">Condiciones</dt><dd className="whitespace-pre-wrap">{cot.condiciones}</dd></div>}
             </dl>
@@ -166,12 +174,12 @@ export default function CotizacionDetailPage() {
                 </>
               )}
               {isAutorizada && !cot.numero_factura && (
-                <button onClick={() => setActionModal('factura')} className="btn-warning w-full flex items-center justify-center gap-2 text-sm">
+                <button onClick={() => { setFacturaForm({ numero_factura: '', fecha_facturacion: '', monto_factura: String(cot.ingreso_real ?? '') }); setActionModal('factura') }} className="btn-warning w-full flex items-center justify-center gap-2 text-sm">
                   <Receipt className="w-4 h-4" /> Registrar factura
                 </button>
               )}
               {cot.numero_factura && !cot.fecha_cobro && (
-                <button onClick={() => setActionModal('cobro')} className="btn-success w-full flex items-center justify-center gap-2 text-sm">
+                <button onClick={() => { setCobroForm({ fecha_cobro: '', monto_cobrado: String(cot.monto_factura ?? cot.ingreso_real ?? '') }); setActionModal('cobro') }} className="btn-success w-full flex items-center justify-center gap-2 text-sm">
                   <CreditCard className="w-4 h-4" /> Registrar cobro
                 </button>
               )}
@@ -196,6 +204,10 @@ export default function CotizacionDetailPage() {
       {/* Factura Modal */}
       <Modal isOpen={actionModal === 'factura'} onClose={() => setActionModal(null)} title="Registrar factura">
         <div className="space-y-4">
+          <div className="p-3 bg-blue-50 rounded-lg text-sm text-blue-700">
+            <p>Total cotización: <strong>{formatMoney(cot?.total)}</strong> — Ingreso real (sin comisión): <strong>{formatMoney(cot?.ingreso_real)}</strong></p>
+            <p className="text-xs mt-1 text-blue-500">El monto de factura es lo que tú le facturas al intermediario.</p>
+          </div>
           <div>
             <label className="label-field">Número de factura *</label>
             <input value={facturaForm.numero_factura} onChange={e => setFacturaForm(p => ({ ...p, numero_factura: e.target.value }))} className="input-field" required />
@@ -203,6 +215,11 @@ export default function CotizacionDetailPage() {
           <div>
             <label className="label-field">Fecha de facturación *</label>
             <input type="date" value={facturaForm.fecha_facturacion} onChange={e => setFacturaForm(p => ({ ...p, fecha_facturacion: e.target.value }))} className="input-field" required />
+          </div>
+          <div>
+            <label className="label-field">Monto facturado *</label>
+            <input type="number" step="0.01" min="0" value={facturaForm.monto_factura} onChange={e => setFacturaForm(p => ({ ...p, monto_factura: e.target.value }))} className="input-field" placeholder={cot?.ingreso_real} />
+            <p className="text-xs text-gray-400 mt-1">Pre-llenado con tu ingreso real. Ajusta si es diferente.</p>
           </div>
           <div className="flex justify-end gap-3">
             <button onClick={() => setActionModal(null)} className="btn-secondary">Cancelar</button>
@@ -216,9 +233,20 @@ export default function CotizacionDetailPage() {
       {/* Cobro Modal */}
       <Modal isOpen={actionModal === 'cobro'} onClose={() => setActionModal(null)} title="Registrar cobro">
         <div className="space-y-4">
+          {cot?.monto_factura != null && (
+            <div className="p-3 bg-green-50 rounded-lg text-sm text-green-700">
+              <p>Monto facturado: <strong>{formatMoney(cot.monto_factura)}</strong></p>
+              <p className="text-xs mt-1 text-green-500">Puedes registrar un pago parcial si el cliente no paga el total.</p>
+            </div>
+          )}
           <div>
             <label className="label-field">Fecha de cobro *</label>
-            <input type="date" value={cobroForm.fecha_cobro} onChange={e => setCobroForm({ fecha_cobro: e.target.value })} className="input-field" required />
+            <input type="date" value={cobroForm.fecha_cobro} onChange={e => setCobroForm(p => ({ ...p, fecha_cobro: e.target.value }))} className="input-field" required />
+          </div>
+          <div>
+            <label className="label-field">Monto cobrado *</label>
+            <input type="number" step="0.01" min="0" value={cobroForm.monto_cobrado} onChange={e => setCobroForm(p => ({ ...p, monto_cobrado: e.target.value }))} className="input-field" placeholder={cot?.monto_factura ?? cot?.ingreso_real} />
+            <p className="text-xs text-gray-400 mt-1">Pre-llenado con el monto facturado. Ajusta si es pago parcial.</p>
           </div>
           <div className="flex justify-end gap-3">
             <button onClick={() => setActionModal(null)} className="btn-secondary">Cancelar</button>
