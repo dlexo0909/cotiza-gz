@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { api } from '../../services/api'
 import { formatMoney, formatDate } from '../../utils/helpers'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
-import { DollarSign, TrendingUp, FileText, CreditCard, Download } from 'lucide-react'import toast from 'react-hot-toast'
+import { DollarSign, TrendingUp, FileText, CreditCard, Download } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 function exportCSV(rows, filename) {
   const headers = ['Folio', 'Cliente', 'Sucursal', 'Fecha Cobro', 'N° Factura', 'Total Cotización', 'Comisión', 'Ingreso Real', 'Monto Facturado', 'Monto Cobrado']
