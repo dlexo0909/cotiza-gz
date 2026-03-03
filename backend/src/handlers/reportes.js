@@ -38,9 +38,9 @@ export async function reporteIngresos(event) {
   // Summary
   const resumen = {
     cobradas: rows.length,
-    ingreso_real: rows.reduce((s, r) => s + parseFloat(r.ingreso_real || 0), 0),
+    total_facturado: rows.reduce((s, r) => s + parseFloat(r.monto_factura ?? r.ingreso_real ?? 0), 0),
+    total_cobrado: rows.reduce((s, r) => s + parseFloat(r.monto_cobrado ?? r.monto_factura ?? r.ingreso_real ?? 0), 0),
     comision: rows.reduce((s, r) => s + parseFloat(r.comision || 0), 0),
-    total_facturado: rows.reduce((s, r) => s + parseFloat(r.monto_factura || r.ingreso_real || 0), 0),
   }
 
   // Monthly breakdown

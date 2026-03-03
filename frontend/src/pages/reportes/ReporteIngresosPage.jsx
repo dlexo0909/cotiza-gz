@@ -88,9 +88,10 @@ export default function ReporteIngresosPage() {
 
       {loading ? <LoadingSpinner /> : !data ? null : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
             <StatCard title="Cotizaciones cobradas" value={data.resumen?.cobradas ?? 0} icon={FileText} color="border-blue-500 text-blue-600" />
             <StatCard title="Total facturado" value={formatMoney(data.resumen?.total_facturado ?? 0)} icon={CreditCard} color="border-green-500 text-green-600" />
+            <StatCard title="Total cobrado" value={formatMoney(data.resumen?.total_cobrado ?? 0)} icon={DollarSign} color="border-orange-500 text-orange-600" />
             <StatCard title="Comisión pagada" value={formatMoney(data.resumen?.comision ?? 0)} icon={TrendingUp} color="border-purple-500 text-purple-600" />
           </div>
 
