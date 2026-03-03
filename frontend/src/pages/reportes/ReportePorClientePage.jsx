@@ -41,10 +41,9 @@ export default function ReportePorClientePage() {
                   <th className="table-header text-right">Órdenes</th>
                   <th className="table-header text-right">Cotizaciones</th>
                   <th className="table-header text-right">Cobradas</th>
-                  <th className="table-header text-right">Ingreso Real</th>
+                  <th className="table-header text-right">Facturado</th>
+                  <th className="table-header text-right">Cobrado</th>
                   <th className="table-header text-right">Comisión</th>
-                  <th className="table-header text-right">Total Facturado</th>
-                  <th className="table-header text-right">Pendiente</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -54,10 +53,9 @@ export default function ReportePorClientePage() {
                     <td className="table-cell text-right">{c.ordenes}</td>
                     <td className="table-cell text-right">{c.cotizaciones}</td>
                     <td className="table-cell text-right">{c.cobradas}</td>
-                    <td className="table-cell text-right text-green-600">{formatMoney(c.ingreso_real)}</td>
-                    <td className="table-cell text-right">{formatMoney(c.comision)}</td>
-                    <td className="table-cell text-right font-medium">{formatMoney(c.total_facturado)}</td>
-                    <td className="table-cell text-right text-orange-600">{formatMoney(c.pendiente)}</td>
+                    <td className="table-cell text-right text-green-600 font-semibold">{formatMoney(c.total_facturado)}</td>
+                    <td className="table-cell text-right text-blue-600 font-semibold">{formatMoney(c.total_cobrado)}</td>
+                    <td className="table-cell text-right text-red-500">{formatMoney(c.comision)}</td>
                   </tr>
                 ))}
               </tbody>
