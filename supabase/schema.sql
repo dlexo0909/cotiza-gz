@@ -182,17 +182,26 @@ LEFT JOIN public.usuarios u ON o.created_by = u.id;
 DROP VIEW IF EXISTS public.v_cotizaciones_completas;
 CREATE VIEW public.v_cotizaciones_completas AS
 SELECT
-  cot.*,
-  o.folio AS orden_folio,
-  o.estatus AS orden_estatus,
+  cot.id, cot.orden_id, cot.folio, cot.subtotal, cot.iva_pct, cot.iva,
+  cot.comision_pct, cot.comision, cot.ingreso_real, cot.total,
+  cot.estatus, cot.vigencia_dias, cot.fecha_vigencia, cot.condiciones,
+  cot.numero_factura, cot.fecha_facturacion,
+  cot.monto_factura,
+  cot.fecha_cobro,
+  cot.monto_cobrado,
+  cot.fecha_autorizacion,
+  cot.neodata_archivo, cot.neodata_original, cot.neodata_fecha,
+  cot.created_by, cot.created_at, cot.updated_at,
+  o.folio       AS orden_folio,
+  o.estatus     AS orden_estatus,
   o.descripcion AS orden_descripcion,
-  o.ot_cliente AS orden_ot_cliente,
+  o.ot_cliente  AS orden_ot_cliente,
   o.direccion_obra AS orden_direccion_obra,
-  o.cliente_id AS cliente_id,
-  c.nombre AS cliente_nombre,
+  o.cliente_id  AS cliente_id,
+  c.nombre      AS cliente_nombre,
   c.comision_pct AS cliente_comision_pct,
-  cf.nombre AS cliente_final_nombre,
-  u.nombre AS creado_por_nombre
+  cf.nombre     AS cliente_final_nombre,
+  u.nombre      AS creado_por_nombre
 FROM public.cotizaciones cot
 LEFT JOIN public.ordenes_trabajo o ON cot.orden_id = o.id
 LEFT JOIN public.clientes c ON o.cliente_id = c.id

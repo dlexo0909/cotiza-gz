@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react'
 import { api } from '../../services/api'
 import { formatMoney, formatDate } from '../../utils/helpers'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
-import { DollarSign, TrendingUp, FileText, CreditCard, Download } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { DollarSign, TrendingUp, FileText, CreditCard, Download } from 'lucide-react'import toast from 'react-hot-toast'
 
 function exportCSV(rows, filename) {
   const headers = ['Folio', 'Cliente', 'Sucursal', 'Fecha Cobro', 'N° Factura', 'Total Cotización', 'Comisión', 'Ingreso Real', 'Monto Facturado', 'Monto Cobrado']
@@ -89,11 +88,10 @@ export default function ReporteIngresosPage() {
 
       {loading ? <LoadingSpinner /> : !data ? null : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <StatCard title="Cotizaciones cobradas" value={data.resumen?.cobradas ?? 0} icon={FileText} color="border-blue-500 text-blue-600" />
-            <StatCard title="Ingreso real" value={formatMoney(data.resumen?.ingreso_real ?? 0)} icon={DollarSign} color="border-green-500 text-green-600" />
-            <StatCard title="Comisión" value={formatMoney(data.resumen?.comision ?? 0)} icon={TrendingUp} color="border-purple-500 text-purple-600" />
-            <StatCard title="Total facturado" value={formatMoney(data.resumen?.total_facturado ?? 0)} icon={CreditCard} color="border-orange-500 text-orange-600" />
+            <StatCard title="Total facturado" value={formatMoney(data.resumen?.total_facturado ?? 0)} icon={CreditCard} color="border-green-500 text-green-600" />
+            <StatCard title="Comisión pagada" value={formatMoney(data.resumen?.comision ?? 0)} icon={TrendingUp} color="border-purple-500 text-purple-600" />
           </div>
 
           {data.mensual?.length > 0 && (
@@ -147,9 +145,8 @@ export default function ReporteIngresosPage() {
                       <th className="table-header">Fecha Cobro</th>
                       <th className="table-header">Factura</th>
                       <th className="table-header text-right">Total Cliente</th>
-                      <th className="table-header text-right">Ingreso Real</th>
-                      <th className="table-header text-right">Monto Facturado</th>
-                      <th className="table-header text-right">Monto Cobrado</th>
+                      <th className="table-header text-right">Facturado</th>
+                      <th className="table-header text-right">Cobrado</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -160,10 +157,9 @@ export default function ReporteIngresosPage() {
                         <td className="table-cell text-gray-500">{d.cliente_final_nombre || '—'}</td>
                         <td className="table-cell">{formatDate(d.fecha_cobro)}</td>
                         <td className="table-cell">{d.numero_factura || '—'}</td>
-                        <td className="table-cell text-right">{formatMoney(d.total)}</td>
-                        <td className="table-cell text-right text-gray-500">{formatMoney(d.ingreso_real)}</td>
+                        <td className="table-cell text-right text-gray-600">{formatMoney(d.total)}</td>
                         <td className="table-cell text-right text-green-600 font-semibold">{d.monto_factura != null ? formatMoney(d.monto_factura) : '—'}</td>
-                        <td className="table-cell text-right text-blue-600 font-medium">{d.monto_cobrado != null ? formatMoney(d.monto_cobrado) : '—'}</td>
+                        <td className="table-cell text-right text-blue-600 font-semibold">{d.monto_cobrado != null ? formatMoney(d.monto_cobrado) : '—'}</td>
                       </tr>
                     ))}
                   </tbody>
