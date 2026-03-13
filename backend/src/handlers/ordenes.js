@@ -3,7 +3,7 @@ import { ok, created, badRequest, notFound, serverError, parseBody, parseQuery, 
 
 export async function listOrdenes(event) {
   await requireAuth(event)
-  const { page = 1, limit = 20, search = '', estatus = '' } = parseQuery(event)
+  const { page = 1, limit = 20, search = '', estatus = '', cliente_id = '', cliente_final_id = '' } = parseQuery(event)
   const offset = (Math.max(1, parseInt(page)) - 1) * parseInt(limit)
 
   let query = supabase.from('v_ordenes_completas').select('*', { count: 'exact' }).order('created_at', { ascending: false })
@@ -13,6 +13,8 @@ export async function listOrdenes(event) {
     const statusList = estatus.split(',')
     query = query.in('estatus', statusList)
   }
+  if (cliente_id) query = query.eq('cliente_id', cliente_id)
+  if (cliente_final_id) query = query.eq('cliente_final_id', cliente_final_id)
 
   const { data, count, error } = await query.range(offset, offset + parseInt(limit) - 1)
   if (error) return serverError(error.message)

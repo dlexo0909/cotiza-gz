@@ -14,11 +14,29 @@ export default function OrdenesListPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [clienteFilter, setClienteFilter] = useState('')
+  const [sucursalFilter, setSucursalFilter] = useState('')
+  const [clientes, setClientes] = useState([])
+  const [sucursales, setSucursales] = useState([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const navigate = useNavigate()
 
-  useEffect(() => { loadData() }, [page, search, statusFilter])
+  useEffect(() => {
+    api.get('/clientes?limit=200').then(d => setClientes(d.items || [])).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (clienteFilter) {
+      api.get(`/clientes-finales?limit=200&cliente_id=${clienteFilter}`)
+        .then(d => setSucursales(d.items || [])).catch(() => {})
+    } else {
+      setSucursales([])
+      setSucursalFilter('')
+    }
+  }, [clienteFilter])
+
+  useEffect(() => { loadData() }, [page, search, statusFilter, clienteFilter, sucursalFilter])
 
   async function loadData() {
     try {
@@ -26,6 +44,8 @@ export default function OrdenesListPage() {
       const params = new URLSearchParams({ page, limit: 20 })
       if (search) params.append('search', search)
       if (statusFilter) params.append('estatus', statusFilter)
+      if (clienteFilter) params.append('cliente_id', clienteFilter)
+      if (sucursalFilter) params.append('cliente_final_id', sucursalFilter)
       const data = await api.get(`/ordenes?${params}`)
       setItems(data.items)
       setTotalPages(data.totalPages)
@@ -43,10 +63,10 @@ export default function OrdenesListPage() {
       </div>
 
       <div className="card mb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input type="text" placeholder="Buscar por folio, cliente, descripción..." value={search}
+            <input type="text" placeholder="Folio, descripción, OT..." value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }} className="input-field pl-10" />
           </div>
           <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }} className="input-field">
@@ -54,6 +74,14 @@ export default function OrdenesListPage() {
             {Object.entries(ORDER_STATUS_CONFIG).map(([k, v]) => (
               <option key={k} value={k}>{v.label}</option>
             ))}
+          </select>
+          <select value={clienteFilter} onChange={(e) => { setClienteFilter(e.target.value); setSucursalFilter(''); setPage(1) }} className="input-field">
+            <option value="">Todos los clientes</option>
+            {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+          </select>
+          <select value={sucursalFilter} onChange={(e) => { setSucursalFilter(e.target.value); setPage(1) }} className="input-field" disabled={!clienteFilter}>
+            <option value="">{clienteFilter ? 'Todas las sucursales' : 'Selecciona cliente primero'}</option>
+            {sucursales.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
           </select>
         </div>
       </div>
@@ -86,7 +114,9 @@ export default function OrdenesListPage() {
                       </td>
                       <td className="table-cell">{o.cliente_nombre}</td>
                       <td className="table-cell text-sm">{o.cliente_final_nombre || '—'}</td>
-                      <td className="table-cell text-sm max-w-[200px] truncate">{o.descripcion}</td>
+                      <td className="table-cell text-sm max-w-xs">
+                        <span className="line-clamp-2" title={o.descripcion}>{o.descripcion}</span>
+                      </td>
                       <td className="table-cell"><StatusBadge status={o.estatus} config={ORDER_STATUS_CONFIG} /></td>
                       <td className="table-cell">{o.monto_autorizado ? formatMoney(o.monto_autorizado) : '—'}</td>
                       <td className="table-cell text-sm">{formatDate(o.created_at)}</td>
