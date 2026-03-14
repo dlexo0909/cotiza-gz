@@ -96,7 +96,7 @@ export default function OrdenesListPage() {
               <table className="w-full">
                 <thead>
                   <tr>
-                    <th className="table-header">Folio</th>
+                    <th className="table-header">Folio / OT Cliente</th>
                     <th className="table-header">Cliente</th>
                     <th className="table-header">Sucursal</th>
                     <th className="table-header">Descripción</th>
@@ -109,8 +109,11 @@ export default function OrdenesListPage() {
                 <tbody className="divide-y divide-gray-100">
                   {items.map((o) => (
                     <tr key={o.id} className="hover:bg-gray-50">
-                      <td className="table-cell font-medium text-primary-600">
-                        <Link to={`/ordenes/${o.id}`} className="hover:underline">{o.folio}</Link>
+                      <td className="table-cell">
+                        <div className="space-y-1">
+                          <Link to={`/ordenes/${o.id}`} className="font-medium text-primary-600 hover:underline">{o.folio}</Link>
+                          <p className="text-xs text-gray-500">OT Cliente: {o.ot_cliente || '—'}</p>
+                        </div>
                       </td>
                       <td className="table-cell">{o.cliente_nombre}</td>
                       <td className="table-cell text-sm">{o.cliente_final_nombre || '—'}</td>
