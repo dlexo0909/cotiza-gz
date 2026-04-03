@@ -22,6 +22,9 @@ export default async function (req, res) {
   if (pathParts.length >= 2) {
     pathParameters.id = pathParts[1]
   }
+  if (pathParts.length >= 4 && pathParts[2] === 'pagos') {
+    pathParameters.pagoId = pathParts[3]
+  }
 
   const event = {
     httpMethod: req.method,

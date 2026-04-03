@@ -252,3 +252,66 @@ export async function createOrdenPago(event) {
   if (error) return serverError(error.message)
   return created(data)
 }
+
+export async function updateOrdenPago(event) {
+  await requireAuth(event)
+  const ordenId = parsePathParam(event, 'id')
+  const pagoId = parsePathParam(event, 'pagoId')
+  const body = parseBody(event)
+  const concepto = body.concepto?.trim()
+  const monto = parseFloat(body.monto)
+  const fechaPago = body.fecha_pago
+
+  if (!concepto) return badRequest('Concepto requerido')
+  if (!Number.isFinite(monto) || monto <= 0) return badRequest('Monto inválido')
+  if (!fechaPago) return badRequest('Fecha de pago requerida')
+
+  const { data: existing, error: existingError } = await supabase
+    .from('ordenes_pagos')
+    .select('id, orden_id')
+    .eq('id', pagoId)
+    .eq('orden_id', ordenId)
+    .single()
+
+  if (existingError || !existing) return notFound('Pago no encontrado')
+
+  const { data, error } = await supabase
+    .from('ordenes_pagos')
+    .update({
+      concepto,
+      monto,
+      fecha_pago: fechaPago,
+      notas: body.notas?.trim() || null,
+    })
+    .eq('id', pagoId)
+    .eq('orden_id', ordenId)
+    .select()
+    .single()
+
+  if (error) return serverError(error.message)
+  return ok(data)
+}
+
+export async function deleteOrdenPago(event) {
+  await requireAuth(event)
+  const ordenId = parsePathParam(event, 'id')
+  const pagoId = parsePathParam(event, 'pagoId')
+
+  const { data: existing, error: existingError } = await supabase
+    .from('ordenes_pagos')
+    .select('id')
+    .eq('id', pagoId)
+    .eq('orden_id', ordenId)
+    .single()
+
+  if (existingError || !existing) return notFound('Pago no encontrado')
+
+  const { error } = await supabase
+    .from('ordenes_pagos')
+    .delete()
+    .eq('id', pagoId)
+    .eq('orden_id', ordenId)
+
+  if (error) return serverError(error.message)
+  return ok({ message: 'Pago eliminado' })
+}

@@ -5,7 +5,7 @@ import { formatDate, formatMoney, ORDER_STATUS_CONFIG, QUOTE_STATUS_CONFIG, ORDE
 import StatusBadge from '../../components/ui/StatusBadge'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import Modal from '../../components/ui/Modal'
-import { ArrowLeft, Edit, FileText, Plus, Clock } from 'lucide-react'
+import { ArrowLeft, Edit, FileText, Plus, Clock, Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function OrdenDetailPage() {
@@ -21,6 +21,8 @@ export default function OrdenDetailPage() {
   const [comentario, setComentario] = useState('')
   const [changingStatus, setChangingStatus] = useState(false)
   const [savingPayment, setSavingPayment] = useState(false)
+  const [editingPayment, setEditingPayment] = useState(null)
+  const [deletingPayment, setDeletingPayment] = useState(null)
   const [paymentForm, setPaymentForm] = useState({
     concepto: '',
     monto: '',
@@ -60,6 +62,16 @@ export default function OrdenDetailPage() {
     finally { setChangingStatus(false) }
   }
 
+  function resetPaymentForm() {
+    setPaymentForm({
+      concepto: '',
+      monto: '',
+      fecha_pago: new Date().toISOString().slice(0, 10),
+      notas: '',
+    })
+    setEditingPayment(null)
+  }
+
   async function handlePaymentSubmit(e) {
     e.preventDefault()
     if (!paymentForm.concepto.trim()) { toast.error('Captura el concepto del adelanto'); return }
@@ -68,19 +80,48 @@ export default function OrdenDetailPage() {
 
     setSavingPayment(true)
     try {
-      await api.post(`/ordenes/${id}/pagos`, {
+      const payload = {
         concepto: paymentForm.concepto,
         monto: Number(paymentForm.monto),
         fecha_pago: paymentForm.fecha_pago,
         notas: paymentForm.notas,
-      })
-      toast.success('Adelanto registrado')
-      setPaymentForm({
-        concepto: '',
-        monto: '',
-        fecha_pago: new Date().toISOString().slice(0, 10),
-        notas: '',
-      })
+      }
+
+      if (editingPayment) {
+        await api.patch(`/ordenes/${id}/pagos/${editingPayment.id}`, payload)
+        toast.success('Adelanto actualizado')
+      } else {
+        await api.post(`/ordenes/${id}/pagos`, payload)
+        toast.success('Adelanto registrado')
+      }
+
+      resetPaymentForm()
+      loadData()
+    } catch (err) { toast.error(err.message) }
+    finally { setSavingPayment(false) }
+  }
+
+  function startEditPayment(pago) {
+    setEditingPayment(pago)
+    setPaymentForm({
+      concepto: pago.concepto || '',
+      monto: pago.monto != null ? String(pago.monto) : '',
+      fecha_pago: pago.fecha_pago || new Date().toISOString().slice(0, 10),
+      notas: pago.notas || '',
+    })
+  }
+
+  async function handleDeletePayment() {
+    if (!deletingPayment) return
+
+    setSavingPayment(true)
+    try {
+      await api.delete(`/ordenes/${id}/pagos/${deletingPayment.id}`)
+      toast.success('Adelanto eliminado')
+      setDeletingPayment(null)
+      if (editingPayment?.id === deletingPayment.id) {
+        resetPaymentForm()
+      }
       loadData()
     } catch (err) { toast.error(err.message) }
     finally { setSavingPayment(false) }
@@ -213,10 +254,17 @@ export default function OrdenDetailPage() {
                 />
               </div>
               <div className="md:col-span-2 flex justify-end">
-                <button type="submit" disabled={savingPayment} className="btn-primary flex items-center gap-2">
+                <div className="flex gap-3">
+                  {editingPayment && (
+                    <button type="button" onClick={resetPaymentForm} className="btn-secondary">
+                      Cancelar edición
+                    </button>
+                  )}
+                  <button type="submit" disabled={savingPayment} className="btn-primary flex items-center gap-2">
                   <Plus className="w-4 h-4" />
-                  {savingPayment ? 'Guardando...' : 'Registrar adelanto'}
-                </button>
+                    {savingPayment ? 'Guardando...' : editingPayment ? 'Guardar cambios' : 'Registrar adelanto'}
+                  </button>
+                </div>
               </div>
             </form>
 
@@ -232,6 +280,7 @@ export default function OrdenDetailPage() {
                       <th className="table-header">Monto</th>
                       <th className="table-header">Notas</th>
                       <th className="table-header">Registró</th>
+                      <th className="table-header">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -242,6 +291,16 @@ export default function OrdenDetailPage() {
                         <td className="table-cell">{formatMoney(pago.monto)}</td>
                         <td className="table-cell">{pago.notas || '—'}</td>
                         <td className="table-cell">{pago.usuario_nombre || '—'}</td>
+                        <td className="table-cell">
+                          <div className="flex items-center gap-3">
+                            <button onClick={() => startEditPayment(pago)} className="text-gray-400 hover:text-primary-600" title="Editar pago">
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => setDeletingPayment(pago)} className="text-gray-400 hover:text-red-600" title="Eliminar pago">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -313,6 +372,21 @@ export default function OrdenDetailPage() {
             <button onClick={handleStatusChange} disabled={changingStatus}
               className={newStatus === 'cancelado' ? 'btn-danger' : 'btn-primary'}>
               {changingStatus ? 'Cambiando...' : 'Confirmar'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={!!deletingPayment} onClose={() => setDeletingPayment(null)} title="Eliminar adelanto">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Se eliminará el adelanto de <strong>{deletingPayment ? formatMoney(deletingPayment.monto) : ''}</strong>
+            {deletingPayment?.concepto ? <> por concepto de <strong>{deletingPayment.concepto}</strong></> : null}.
+          </p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setDeletingPayment(null)} className="btn-secondary">Cancelar</button>
+            <button onClick={handleDeletePayment} disabled={savingPayment} className="btn-danger">
+              {savingPayment ? 'Eliminando...' : 'Eliminar'}
             </button>
           </div>
         </div>

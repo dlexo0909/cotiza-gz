@@ -97,7 +97,11 @@ export async function updateCotizacion(event) {
   const body = parseBody(event)
 
   // Check status
-  const { data: existing } = await supabase.from('cotizaciones').select('estatus').eq('id', id).single()
+  const { data: existing } = await supabase
+    .from('cotizaciones')
+    .select('estatus, orden_id, ordenes_trabajo(estatus)')
+    .eq('id', id)
+    .single()
   if (!existing) return notFound('Cotización no encontrada')
   if (existing.estatus !== 'borrador') return badRequest('Solo se pueden editar cotizaciones en borrador')
 
@@ -132,6 +136,16 @@ export async function updateCotizacion(event) {
     orden: p.orden || i + 1,
   }))
   await supabase.from('cotizacion_partidas').insert(partidas)
+
+  // Keep order amount in sync with the current draft quotation shown in orders/reports.
+  if (existing.orden_id && ['cotizado', 'autorizado'].includes(existing.ordenes_trabajo?.estatus)) {
+    const { error: orderSyncError } = await supabase
+      .from('ordenes_trabajo')
+      .update({ monto_autorizado: total })
+      .eq('id', existing.orden_id)
+
+    if (orderSyncError) return serverError(orderSyncError.message)
+  }
 
   return ok({ message: 'Cotización actualizada' })
 }

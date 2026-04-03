@@ -1,6 +1,6 @@
 import { listClientes, getCliente, createCliente, updateCliente } from './handlers/clientes.js'
 import { listClientesFinales, getClienteFinal, createClienteFinal, updateClienteFinal } from './handlers/clientes-finales.js'
-import { listOrdenes, getOrden, createOrden, updateOrden, changeOrdenStatus, getOrdenHistorial, listOrdenPagos, createOrdenPago } from './handlers/ordenes.js'
+import { listOrdenes, getOrden, createOrden, updateOrden, changeOrdenStatus, getOrdenHistorial, listOrdenPagos, createOrdenPago, updateOrdenPago, deleteOrdenPago } from './handlers/ordenes.js'
 import { listCotizaciones, getCotizacion, createCotizacion, updateCotizacion, changeCotizacionStatus, getAnalisisCostos, updateAnalisisCostos, getOrdenCotizaciones } from './handlers/cotizaciones.js'
 import { reporteIngresos, reportePorCliente, reporteOrdenes, reportePorCobrar } from './handlers/reportes.js'
 import { listUsuarios, getUsuario, createUsuario, updateUsuario, toggleUsuario } from './handlers/usuarios.js'
@@ -54,6 +54,8 @@ export async function handler(event) {
     else if (cleanPath.match(/^\/ordenes\/\d+\/cotizaciones$/) && method === 'GET') result = await getOrdenCotizaciones(event)
     else if (cleanPath.match(/^\/ordenes\/\d+\/pagos$/) && method === 'GET') result = await listOrdenPagos(event)
     else if (cleanPath.match(/^\/ordenes\/\d+\/pagos$/) && method === 'POST') result = await createOrdenPago(event)
+    else if (cleanPath.match(/^\/ordenes\/\d+\/pagos\/\d+$/) && method === 'PATCH') result = await updateOrdenPago(event)
+    else if (cleanPath.match(/^\/ordenes\/\d+\/pagos\/\d+$/) && method === 'DELETE') result = await deleteOrdenPago(event)
 
     // --- Cotizaciones ---
     else if (cleanPath === '/cotizaciones' && method === 'GET') result = await listCotizaciones(event)
