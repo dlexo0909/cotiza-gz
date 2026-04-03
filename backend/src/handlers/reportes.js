@@ -109,8 +109,8 @@ export async function reporteOrdenes(event) {
   await requireAuth(event)
   const { desde, hasta, cliente_id } = parseQuery(event)
 
-  let query = supabase.from('ordenes_trabajo')
-    .select('*, clientes(nombre)')
+  let query = supabase.from('v_ordenes_completas')
+    .select('*')
   if (desde) query = query.gte('created_at', desde)
   if (hasta) query = query.lte('created_at', hasta)
   if (cliente_id) query = query.eq('cliente_id', cliente_id)
@@ -118,14 +118,37 @@ export async function reporteOrdenes(event) {
   const { data, error } = await query.order('created_at', { ascending: false })
   if (error) return serverError(error.message)
 
+  const ordenIds = (data || []).map(ord => ord.id)
+  let pagosPorOrden = {}
+  if (ordenIds.length > 0) {
+    const { data: pagos, error: pagosError } = await supabase
+      .from('ordenes_pagos')
+      .select('orden_id, monto')
+      .in('orden_id', ordenIds)
+
+    if (pagosError) return serverError(pagosError.message)
+
+    pagosPorOrden = (pagos || []).reduce((acc, pago) => {
+      const ordenId = pago.orden_id
+      const monto = parseFloat(pago.monto || 0)
+      acc[ordenId] = (acc[ordenId] || 0) + monto
+      return acc
+    }, {})
+  }
+
   const statuses = ['levantamiento', 'cotizado', 'autorizado', 'en_proceso', 'terminado', 'facturado', 'cobrado', 'cancelado']
   const pipeline = {}
   const detalle = {}
   for (const s of statuses) { pipeline[s] = 0; detalle[s] = [] }
 
   for (const ord of (data || [])) {
-    const item = { ...ord, cliente_nombre: ord.clientes?.nombre || '' }
-    delete item.clientes
+    const totalAdelantos = pagosPorOrden[ord.id] || 0
+    const montoAutorizado = parseFloat(ord.monto_autorizado || 0)
+    const item = {
+      ...ord,
+      total_adelantos: Math.round(totalAdelantos * 100) / 100,
+      saldo_pendiente: Math.round((montoAutorizado - totalAdelantos) * 100) / 100,
+    }
     if (pipeline[ord.estatus] !== undefined) {
       pipeline[ord.estatus]++
       detalle[ord.estatus].push(item)

@@ -96,11 +96,14 @@ export default function OrdenesListPage() {
               <table className="w-full">
                 <thead>
                   <tr>
-                    <th className="table-header">Folio / OT Cliente</th>
+                    <th className="table-header">Folio</th>
+                    <th className="table-header">OT Cliente</th>
                     <th className="table-header">Cliente</th>
                     <th className="table-header">Sucursal</th>
                     <th className="table-header">Descripción</th>
                     <th className="table-header">Estatus</th>
+                    <th className="table-header">Status Tririga</th>
+                    <th className="table-header">Adelantos</th>
                     <th className="table-header">Monto</th>
                     <th className="table-header">Fecha</th>
                     <th className="table-header">Acciones</th>
@@ -109,18 +112,16 @@ export default function OrdenesListPage() {
                 <tbody className="divide-y divide-gray-100">
                   {items.map((o) => (
                     <tr key={o.id} className="hover:bg-gray-50">
-                      <td className="table-cell">
-                        <div className="space-y-1">
-                          <Link to={`/ordenes/${o.id}`} className="font-medium text-primary-600 hover:underline">{o.folio}</Link>
-                          <p className="text-xs text-gray-500">OT Cliente: {o.ot_cliente || '—'}</p>
-                        </div>
-                      </td>
+                      <td className="table-cell"><Link to={`/ordenes/${o.id}`} className="font-medium text-primary-600 hover:underline">{o.folio}</Link></td>
+                      <td className="table-cell text-sm">{o.ot_cliente || '—'}</td>
                       <td className="table-cell">{o.cliente_nombre}</td>
                       <td className="table-cell text-sm">{o.cliente_final_nombre || '—'}</td>
                       <td className="table-cell text-sm max-w-xs">
                         <span className="line-clamp-2" title={o.descripcion}>{o.descripcion}</span>
                       </td>
                       <td className="table-cell"><StatusBadge status={o.estatus} config={ORDER_STATUS_CONFIG} /></td>
+                      <td className="table-cell text-sm">{o.estatus_tririga || '—'}</td>
+                      <td className="table-cell">{o.total_adelantos ? formatMoney(o.total_adelantos) : '—'}</td>
                       <td className="table-cell">{o.monto_autorizado ? formatMoney(o.monto_autorizado) : '—'}</td>
                       <td className="table-cell text-sm">{formatDate(o.created_at)}</td>
                       <td className="table-cell">

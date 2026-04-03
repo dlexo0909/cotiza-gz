@@ -13,7 +13,7 @@ export default function OrdenFormPage() {
   const [clientes, setClientes] = useState([])
   const [sucursales, setSucursales] = useState([])
   const [form, setForm] = useState({
-    cliente_id: '', cliente_final_id: '', ot_cliente: '', descripcion: '',
+    cliente_id: '', cliente_final_id: '', ot_cliente: '', estatus_tririga: '', descripcion: '',
     direccion_obra: '', fecha_levantamiento: '', fecha_inicio: '', fecha_fin: '', notas: '',
   })
 
@@ -38,7 +38,7 @@ export default function OrdenFormPage() {
       const data = await api.get(`/ordenes/${id}`)
       setForm({
         cliente_id: data.cliente_id || '', cliente_final_id: data.cliente_final_id || '',
-        ot_cliente: data.ot_cliente || '', descripcion: data.descripcion || '',
+        ot_cliente: data.ot_cliente || '', estatus_tririga: data.estatus_tririga || '', descripcion: data.descripcion || '',
         direccion_obra: data.direccion_obra || '',
         fecha_levantamiento: data.fecha_levantamiento?.substring(0, 10) || '',
         fecha_inicio: data.fecha_inicio?.substring(0, 10) || '',
@@ -98,6 +98,10 @@ export default function OrdenFormPage() {
           <div>
             <label className="label-field">OT Cliente</label>
             <input name="ot_cliente" value={form.ot_cliente} onChange={handleChange} className="input-field" placeholder="Referencia del cliente" />
+          </div>
+          <div>
+            <label className="label-field">Status Tririga</label>
+            <input name="estatus_tririga" value={form.estatus_tririga} onChange={handleChange} className="input-field" placeholder="Estatus reportado por el cliente" />
           </div>
           <div>
             <label className="label-field">Fecha levantamiento</label>

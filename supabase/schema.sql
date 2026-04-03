@@ -58,6 +58,7 @@ CREATE TABLE public.ordenes_trabajo (
   cliente_id bigint NOT NULL REFERENCES public.clientes(id),
   cliente_final_id bigint REFERENCES public.clientes_finales(id),
   ot_cliente varchar(100),
+  estatus_tririga varchar(100),
   descripcion text NOT NULL,
   direccion_obra text,
   fecha_levantamiento date,
@@ -66,6 +67,19 @@ CREATE TABLE public.ordenes_trabajo (
   estatus varchar(20) NOT NULL DEFAULT 'levantamiento'
     CHECK (estatus IN ('levantamiento','cotizado','autorizado','en_proceso','terminado','facturado','cobrado','cancelado')),
   monto_autorizado numeric(14,2),
+  notas text,
+  created_by bigint REFERENCES public.usuarios(id),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- 4.1 TABLA: ordenes_pagos (adelantos / pagos parciales)
+CREATE TABLE public.ordenes_pagos (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  orden_id bigint NOT NULL REFERENCES public.ordenes_trabajo(id) ON DELETE CASCADE,
+  concepto varchar(150) NOT NULL,
+  monto numeric(14,2) NOT NULL DEFAULT 0 CHECK (monto > 0),
+  fecha_pago date NOT NULL,
   notas text,
   created_by bigint REFERENCES public.usuarios(id),
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -154,6 +168,7 @@ CREATE INDEX idx_clientes_finales_cliente ON public.clientes_finales(cliente_id)
 CREATE INDEX idx_ordenes_cliente ON public.ordenes_trabajo(cliente_id);
 CREATE INDEX idx_ordenes_estatus ON public.ordenes_trabajo(estatus);
 CREATE INDEX idx_ordenes_folio ON public.ordenes_trabajo(folio);
+CREATE INDEX idx_ordenes_pagos_orden ON public.ordenes_pagos(orden_id);
 CREATE INDEX idx_cotizaciones_orden ON public.cotizaciones(orden_id);
 CREATE INDEX idx_cotizaciones_estatus ON public.cotizaciones(estatus);
 CREATE INDEX idx_cotizaciones_folio ON public.cotizaciones(folio);
@@ -216,6 +231,7 @@ ALTER TABLE public.usuarios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.clientes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.clientes_finales ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ordenes_trabajo ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ordenes_pagos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cotizaciones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cotizacion_partidas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cotizacion_analisis_costos ENABLE ROW LEVEL SECURITY;
@@ -234,6 +250,9 @@ CREATE POLICY "Authenticated users full access" ON public.clientes_finales
   FOR ALL USING (auth.role() = 'authenticated');
 
 CREATE POLICY "Authenticated users full access" ON public.ordenes_trabajo
+  FOR ALL USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Authenticated users full access" ON public.ordenes_pagos
   FOR ALL USING (auth.role() = 'authenticated');
 
 CREATE POLICY "Authenticated users full access" ON public.cotizaciones
@@ -331,4 +350,5 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.usuarios FOR EACH ROW EXEC
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.clientes FOR EACH ROW EXECUTE FUNCTION public.trigger_set_updated_at();
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.clientes_finales FOR EACH ROW EXECUTE FUNCTION public.trigger_set_updated_at();
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.ordenes_trabajo FOR EACH ROW EXECUTE FUNCTION public.trigger_set_updated_at();
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.ordenes_pagos FOR EACH ROW EXECUTE FUNCTION public.trigger_set_updated_at();
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.cotizaciones FOR EACH ROW EXECUTE FUNCTION public.trigger_set_updated_at();

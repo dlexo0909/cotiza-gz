@@ -14,25 +14,35 @@ export default function OrdenDetailPage() {
   const [orden, setOrden] = useState(null)
   const [cotizaciones, setCotizaciones] = useState([])
   const [historial, setHistorial] = useState([])
+  const [pagos, setPagos] = useState([])
   const [loading, setLoading] = useState(true)
   const [statusModal, setStatusModal] = useState(false)
   const [newStatus, setNewStatus] = useState('')
   const [comentario, setComentario] = useState('')
   const [changingStatus, setChangingStatus] = useState(false)
+  const [savingPayment, setSavingPayment] = useState(false)
+  const [paymentForm, setPaymentForm] = useState({
+    concepto: '',
+    monto: '',
+    fecha_pago: new Date().toISOString().slice(0, 10),
+    notas: '',
+  })
 
   useEffect(() => { loadData() }, [id])
 
   async function loadData() {
     try {
       setLoading(true)
-      const [ord, cots, hist] = await Promise.all([
+      const [ord, cots, hist, pagosData] = await Promise.all([
         api.get(`/ordenes/${id}`),
         api.get(`/ordenes/${id}/cotizaciones`),
         api.get(`/ordenes/${id}/historial`),
+        api.get(`/ordenes/${id}/pagos`),
       ])
       setOrden(ord)
       setCotizaciones(cots)
       setHistorial(hist)
+      setPagos(pagosData)
     } catch { toast.error('Error al cargar orden'); navigate('/ordenes') }
     finally { setLoading(false) }
   }
@@ -50,10 +60,38 @@ export default function OrdenDetailPage() {
     finally { setChangingStatus(false) }
   }
 
+  async function handlePaymentSubmit(e) {
+    e.preventDefault()
+    if (!paymentForm.concepto.trim()) { toast.error('Captura el concepto del adelanto'); return }
+    if (!paymentForm.monto || Number(paymentForm.monto) <= 0) { toast.error('Captura un monto válido'); return }
+    if (!paymentForm.fecha_pago) { toast.error('Captura la fecha del pago'); return }
+
+    setSavingPayment(true)
+    try {
+      await api.post(`/ordenes/${id}/pagos`, {
+        concepto: paymentForm.concepto,
+        monto: Number(paymentForm.monto),
+        fecha_pago: paymentForm.fecha_pago,
+        notas: paymentForm.notas,
+      })
+      toast.success('Adelanto registrado')
+      setPaymentForm({
+        concepto: '',
+        monto: '',
+        fecha_pago: new Date().toISOString().slice(0, 10),
+        notas: '',
+      })
+      loadData()
+    } catch (err) { toast.error(err.message) }
+    finally { setSavingPayment(false) }
+  }
+
   if (loading) return <LoadingSpinner />
   if (!orden) return null
 
   const transitions = ORDER_TRANSITIONS[orden.estatus] || []
+  const totalAdelantos = Number(orden.total_adelantos || 0)
+  const saldoPendiente = Number(orden.saldo_pendiente || 0)
 
   return (
     <div>
@@ -78,7 +116,10 @@ export default function OrdenDetailPage() {
             </div>
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div><dt className="text-gray-500">OT Cliente</dt><dd className="font-medium">{orden.ot_cliente || '—'}</dd></div>
+              <div><dt className="text-gray-500">Status Tririga</dt><dd className="font-medium">{orden.estatus_tririga || '—'}</dd></div>
               <div><dt className="text-gray-500">Monto autorizado</dt><dd className="font-medium">{orden.monto_autorizado ? formatMoney(orden.monto_autorizado) : '—'}</dd></div>
+              <div><dt className="text-gray-500">Adelantos recibidos</dt><dd className="font-medium">{formatMoney(totalAdelantos)}</dd></div>
+              <div><dt className="text-gray-500">Saldo pendiente</dt><dd className="font-medium">{orden.monto_autorizado ? formatMoney(saldoPendiente) : '—'}</dd></div>
               <div className="sm:col-span-2"><dt className="text-gray-500">Descripción</dt><dd className="font-medium">{orden.descripcion}</dd></div>
               <div className="sm:col-span-2"><dt className="text-gray-500">Dirección de obra</dt><dd className="font-medium">{orden.direccion_obra || '—'}</dd></div>
               <div><dt className="text-gray-500">F. Levantamiento</dt><dd>{formatDate(orden.fecha_levantamiento)}</dd></div>
@@ -115,6 +156,96 @@ export default function OrdenDetailPage() {
                     <StatusBadge status={c.estatus} config={QUOTE_STATUS_CONFIG} />
                   </Link>
                 ))}
+              </div>
+            )}
+          </div>
+
+          <div className="card">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold">Pagos de adelanto</h2>
+                <p className="text-sm text-gray-500">Registra anticipos como materiales, maniobras u otros conceptos.</p>
+              </div>
+              <div className="text-right text-sm">
+                <p className="text-gray-500">Total adelantado</p>
+                <p className="font-semibold text-gray-900">{formatMoney(totalAdelantos)}</p>
+              </div>
+            </div>
+
+            <form onSubmit={handlePaymentSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+              <div>
+                <label className="label-field">Concepto</label>
+                <input
+                  value={paymentForm.concepto}
+                  onChange={(e) => setPaymentForm(prev => ({ ...prev, concepto: e.target.value }))}
+                  className="input-field"
+                  placeholder="Ej. Materiales"
+                />
+              </div>
+              <div>
+                <label className="label-field">Monto</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={paymentForm.monto}
+                  onChange={(e) => setPaymentForm(prev => ({ ...prev, monto: e.target.value }))}
+                  className="input-field"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label className="label-field">Fecha de pago</label>
+                <input
+                  type="date"
+                  value={paymentForm.fecha_pago}
+                  onChange={(e) => setPaymentForm(prev => ({ ...prev, fecha_pago: e.target.value }))}
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label className="label-field">Notas</label>
+                <input
+                  value={paymentForm.notas}
+                  onChange={(e) => setPaymentForm(prev => ({ ...prev, notas: e.target.value }))}
+                  className="input-field"
+                  placeholder="Opcional"
+                />
+              </div>
+              <div className="md:col-span-2 flex justify-end">
+                <button type="submit" disabled={savingPayment} className="btn-primary flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  {savingPayment ? 'Guardando...' : 'Registrar adelanto'}
+                </button>
+              </div>
+            </form>
+
+            {pagos.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-4">Sin adelantos registrados</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr>
+                      <th className="table-header">Fecha</th>
+                      <th className="table-header">Concepto</th>
+                      <th className="table-header">Monto</th>
+                      <th className="table-header">Notas</th>
+                      <th className="table-header">Registró</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {pagos.map((pago) => (
+                      <tr key={pago.id} className="hover:bg-gray-50">
+                        <td className="table-cell">{formatDate(pago.fecha_pago)}</td>
+                        <td className="table-cell font-medium">{pago.concepto}</td>
+                        <td className="table-cell">{formatMoney(pago.monto)}</td>
+                        <td className="table-cell">{pago.notas || '—'}</td>
+                        <td className="table-cell">{pago.usuario_nombre || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

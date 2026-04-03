@@ -1,6 +1,34 @@
 import { supabase, requireAuth } from '../utils/supabase.js'
 import { ok, created, badRequest, notFound, serverError, parseBody, parseQuery, parsePathParam, isValidOrderTransition } from '../utils/response.js'
 
+async function getOrdenPagosSummary(ordenIds) {
+  if (!ordenIds.length) return {}
+
+  const { data, error } = await supabase
+    .from('ordenes_pagos')
+    .select('orden_id, monto')
+    .in('orden_id', ordenIds)
+
+  if (error) throw new Error(error.message)
+
+  return (data || []).reduce((acc, pago) => {
+    const ordenId = pago.orden_id
+    const monto = parseFloat(pago.monto || 0)
+    acc[ordenId] = (acc[ordenId] || 0) + monto
+    return acc
+  }, {})
+}
+
+function withPagoSummary(orden, pagosPorOrden) {
+  const totalAdelantos = pagosPorOrden[orden.id] || 0
+  const montoAutorizado = parseFloat(orden.monto_autorizado || 0)
+  return {
+    ...orden,
+    total_adelantos: Math.round(totalAdelantos * 100) / 100,
+    saldo_pendiente: Math.round((montoAutorizado - totalAdelantos) * 100) / 100,
+  }
+}
+
 export async function listOrdenes(event) {
   await requireAuth(event)
   const { page = 1, limit = 20, search = '', estatus = '', cliente_id = '', cliente_final_id = '' } = parseQuery(event)
@@ -19,7 +47,15 @@ export async function listOrdenes(event) {
   const { data, count, error } = await query.range(offset, offset + parseInt(limit) - 1)
   if (error) return serverError(error.message)
 
-  return ok({ items: data, total: count, totalPages: Math.ceil(count / parseInt(limit)), page: parseInt(page) })
+  let items = data || []
+  try {
+    const pagosPorOrden = await getOrdenPagosSummary(items.map(item => item.id))
+    items = items.map(item => withPagoSummary(item, pagosPorOrden))
+  } catch (summaryError) {
+    return serverError(summaryError.message)
+  }
+
+  return ok({ items, total: count, totalPages: Math.ceil(count / parseInt(limit)), page: parseInt(page) })
 }
 
 export async function getOrden(event) {
@@ -27,7 +63,13 @@ export async function getOrden(event) {
   const id = parsePathParam(event, 'id')
   const { data, error } = await supabase.from('v_ordenes_completas').select('*').eq('id', id).single()
   if (error || !data) return notFound('Orden no encontrada')
-  return ok(data)
+
+  try {
+    const pagosPorOrden = await getOrdenPagosSummary([data.id])
+    return ok(withPagoSummary(data, pagosPorOrden))
+  } catch (summaryError) {
+    return serverError(summaryError.message)
+  }
 }
 
 export async function createOrden(event) {
@@ -46,6 +88,7 @@ export async function createOrden(event) {
     cliente_id: body.cliente_id,
     cliente_final_id: body.cliente_final_id || null,
     ot_cliente: body.ot_cliente || null,
+    estatus_tririga: body.estatus_tririga?.trim() || null,
     descripcion: body.descripcion.trim(),
     direccion_obra: body.direccion_obra || null,
     fecha_levantamiento: body.fecha_levantamiento || null,
@@ -79,6 +122,7 @@ export async function updateOrden(event) {
     cliente_id: body.cliente_id,
     cliente_final_id: body.cliente_final_id || null,
     ot_cliente: body.ot_cliente || null,
+    estatus_tririga: body.estatus_tririga?.trim() || null,
     descripcion: body.descripcion.trim(),
     direccion_obra: body.direccion_obra || null,
     fecha_levantamiento: body.fecha_levantamiento || null,
@@ -140,4 +184,71 @@ export async function getOrdenHistorial(event) {
   if (error) return serverError(error.message)
   const items = (data || []).map(h => ({ ...h, usuario_nombre: h.usuarios?.nombre, usuarios: undefined }))
   return ok(items)
+}
+
+export async function listOrdenPagos(event) {
+  await requireAuth(event)
+  const ordenId = parsePathParam(event, 'id')
+
+  const { data: orden, error: ordenError } = await supabase
+    .from('ordenes_trabajo')
+    .select('id')
+    .eq('id', ordenId)
+    .single()
+
+  if (ordenError || !orden) return notFound('Orden no encontrada')
+
+  const { data, error } = await supabase
+    .from('ordenes_pagos')
+    .select('*, usuarios(nombre)')
+    .eq('orden_id', ordenId)
+    .order('fecha_pago', { ascending: false })
+    .order('created_at', { ascending: false })
+
+  if (error) return serverError(error.message)
+
+  const items = (data || []).map(pago => ({
+    ...pago,
+    usuario_nombre: pago.usuarios?.nombre || null,
+    usuarios: undefined,
+  }))
+
+  return ok(items)
+}
+
+export async function createOrdenPago(event) {
+  const user = await requireAuth(event)
+  const ordenId = parsePathParam(event, 'id')
+  const body = parseBody(event)
+  const concepto = body.concepto?.trim()
+  const monto = parseFloat(body.monto)
+  const fechaPago = body.fecha_pago
+
+  if (!concepto) return badRequest('Concepto requerido')
+  if (!Number.isFinite(monto) || monto <= 0) return badRequest('Monto inválido')
+  if (!fechaPago) return badRequest('Fecha de pago requerida')
+
+  const { data: orden, error: ordenError } = await supabase
+    .from('ordenes_trabajo')
+    .select('id')
+    .eq('id', ordenId)
+    .single()
+
+  if (ordenError || !orden) return notFound('Orden no encontrada')
+
+  const { data, error } = await supabase
+    .from('ordenes_pagos')
+    .insert({
+      orden_id: parseInt(ordenId),
+      concepto,
+      monto,
+      fecha_pago: fechaPago,
+      notas: body.notas?.trim() || null,
+      created_by: user.id,
+    })
+    .select()
+    .single()
+
+  if (error) return serverError(error.message)
+  return created(data)
 }
