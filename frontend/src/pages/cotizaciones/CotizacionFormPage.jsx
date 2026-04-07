@@ -160,42 +160,44 @@ export default function CotizacionFormPage() {
               </div>
               <div className="space-y-3">
                 {partidas.map((p, i) => (
-                  <div key={i} className="grid grid-cols-1 lg:grid-cols-[minmax(0,2.8fr)_120px_120px_140px_110px_48px] gap-3 items-end p-3 bg-gray-50 rounded-lg">
+                  <div key={i} className="p-3 bg-gray-50 rounded-lg space-y-3">
                     <div>
                       <label className="text-xs text-gray-500">Descripción</label>
                       <textarea
                         value={p.descripcion}
                         onChange={e => handlePartidaChange(i, 'descripcion', e.target.value)}
-                        rows={3}
+                        rows={4}
                         className="input-field text-sm resize-y min-h-[88px] leading-relaxed"
                         placeholder="Describe el alcance, materiales o notas de esta partida"
                         required
                       />
                     </div>
-                    <div>
-                      <label className="text-xs text-gray-500">Unidad</label>
-                      <select value={p.unidad} onChange={e => handlePartidaChange(i, 'unidad', e.target.value)} className="input-field text-sm">
-                        {UNIDADES.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-500">Cantidad</label>
-                      <input type="number" min="0.01" step="0.01" value={p.cantidad}
-                        onChange={e => handlePartidaChange(i, 'cantidad', e.target.value)} className="input-field text-sm" />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-500">P. Unitario</label>
-                      <input type="number" min="0.01" step="0.01" value={p.precio_unitario}
-                        onChange={e => handlePartidaChange(i, 'precio_unitario', e.target.value)} className="input-field text-sm" />
-                    </div>
-                    <div className="text-right">
-                      <label className="text-xs text-gray-500">Importe</label>
-                      <p className="text-sm font-medium py-2">{formatMoney((parseFloat(p.cantidad) || 0) * (parseFloat(p.precio_unitario) || 0))}</p>
-                    </div>
-                    <div className="flex justify-end">
-                      <button type="button" onClick={() => removePartida(i)} className="text-red-400 hover:text-red-600 p-2">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[120px_120px_140px_minmax(0,1fr)_48px] gap-3 items-end">
+                      <div>
+                        <label className="text-xs text-gray-500">Unidad</label>
+                        <select value={p.unidad} onChange={e => handlePartidaChange(i, 'unidad', e.target.value)} className="input-field text-sm">
+                          {UNIDADES.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Cantidad</label>
+                        <input type="number" min="0.01" step="0.01" value={p.cantidad}
+                          onChange={e => handlePartidaChange(i, 'cantidad', e.target.value)} className="input-field text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">P. Unitario</label>
+                        <input type="number" min="0.01" step="0.01" value={p.precio_unitario}
+                          onChange={e => handlePartidaChange(i, 'precio_unitario', e.target.value)} className="input-field text-sm" />
+                      </div>
+                      <div className="text-right lg:text-left">
+                        <label className="text-xs text-gray-500">Importe</label>
+                        <p className="text-sm font-medium py-2">{formatMoney((parseFloat(p.cantidad) || 0) * (parseFloat(p.precio_unitario) || 0))}</p>
+                      </div>
+                      <div className="flex justify-end">
+                        <button type="button" onClick={() => removePartida(i)} className="text-red-400 hover:text-red-600 p-2">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
