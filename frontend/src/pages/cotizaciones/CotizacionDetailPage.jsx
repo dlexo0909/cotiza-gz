@@ -87,7 +87,7 @@ export default function CotizacionDetailPage() {
                   {(cot.partidas || []).map((p, i) => (
                     <tr key={p.id}>
                       <td className="table-cell text-gray-400">{i + 1}</td>
-                      <td className="table-cell">{p.descripcion}</td>
+                      <td className="table-cell whitespace-pre-wrap break-words align-top">{p.descripcion}</td>
                       <td className="table-cell">{UNIDADES.find(u => u.value === p.unidad)?.label || p.unidad}</td>
                       <td className="table-cell text-right">{p.cantidad}</td>
                       <td className="table-cell text-right">{formatMoney(p.precio_unitario)}</td>

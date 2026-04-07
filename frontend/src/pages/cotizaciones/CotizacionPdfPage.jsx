@@ -167,7 +167,7 @@ export default function CotizacionPdfPage() {
             {(cot.partidas || []).map((p, i) => (
               <tr key={p.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                 <td className="px-3 py-2 text-gray-400">{i + 1}</td>
-                <td className="px-3 py-2">{p.descripcion}</td>
+                <td className="px-3 py-2 whitespace-pre-wrap break-words align-top leading-relaxed">{p.descripcion}</td>
                 <td className="px-3 py-2 text-center text-gray-600">
                   {UNIDADES.find(u => u.value === p.unidad)?.label || p.unidad}
                 </td>

@@ -160,33 +160,39 @@ export default function CotizacionFormPage() {
               </div>
               <div className="space-y-3">
                 {partidas.map((p, i) => (
-                  <div key={i} className="grid grid-cols-12 gap-2 items-end p-3 bg-gray-50 rounded-lg">
-                    <div className="col-span-12 sm:col-span-4">
+                  <div key={i} className="grid grid-cols-1 lg:grid-cols-[minmax(0,2.8fr)_120px_120px_140px_110px_48px] gap-3 items-end p-3 bg-gray-50 rounded-lg">
+                    <div>
                       <label className="text-xs text-gray-500">Descripción</label>
-                      <input value={p.descripcion} onChange={e => handlePartidaChange(i, 'descripcion', e.target.value)}
-                        className="input-field text-sm" required />
+                      <textarea
+                        value={p.descripcion}
+                        onChange={e => handlePartidaChange(i, 'descripcion', e.target.value)}
+                        rows={3}
+                        className="input-field text-sm resize-y min-h-[88px] leading-relaxed"
+                        placeholder="Describe el alcance, materiales o notas de esta partida"
+                        required
+                      />
                     </div>
-                    <div className="col-span-4 sm:col-span-2">
+                    <div>
                       <label className="text-xs text-gray-500">Unidad</label>
                       <select value={p.unidad} onChange={e => handlePartidaChange(i, 'unidad', e.target.value)} className="input-field text-sm">
                         {UNIDADES.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
                       </select>
                     </div>
-                    <div className="col-span-3 sm:col-span-2">
+                    <div>
                       <label className="text-xs text-gray-500">Cantidad</label>
                       <input type="number" min="0.01" step="0.01" value={p.cantidad}
                         onChange={e => handlePartidaChange(i, 'cantidad', e.target.value)} className="input-field text-sm" />
                     </div>
-                    <div className="col-span-3 sm:col-span-2">
+                    <div>
                       <label className="text-xs text-gray-500">P. Unitario</label>
                       <input type="number" min="0.01" step="0.01" value={p.precio_unitario}
                         onChange={e => handlePartidaChange(i, 'precio_unitario', e.target.value)} className="input-field text-sm" />
                     </div>
-                    <div className="col-span-1 sm:col-span-1 text-right">
+                    <div className="text-right">
                       <label className="text-xs text-gray-500">Importe</label>
                       <p className="text-sm font-medium py-2">{formatMoney((parseFloat(p.cantidad) || 0) * (parseFloat(p.precio_unitario) || 0))}</p>
                     </div>
-                    <div className="col-span-1 flex justify-end">
+                    <div className="flex justify-end">
                       <button type="button" onClick={() => removePartida(i)} className="text-red-400 hover:text-red-600 p-2">
                         <Trash2 className="w-4 h-4" />
                       </button>
